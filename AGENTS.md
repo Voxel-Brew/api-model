@@ -5,3 +5,10 @@
 - Keep native evaluation, persistence codecs, registries and application services in engine.
 - Preserve existing Java package names and value validation during extraction.
 - Publish model-api with its MIT license in binary and source JARs.
+
+## Standalone repository
+
+- Use Java 21 and the committed Gradle wrapper. Preserve the MIT license and public Java packages.
+- Run `./gradlew spotlessApply` (Windows: `.\gradlew.bat spotlessApply`) before every commit, then review changes.
+- Run `check` and validate Maven POM dependencies when changing publication configuration.
+- Never add application-module dependencies or commit generated output or credentials.
