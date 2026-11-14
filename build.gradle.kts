@@ -31,7 +31,6 @@ apply(from = "gradle/lombok.gradle.kts")
 
 dependencies {
     api(platform("dev.voxelbrew:bom:${providers.gradleProperty("bomVersion").get()}"))
-    testImplementation(platform("org.junit:junit-bom:5.12.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
@@ -183,10 +182,10 @@ publishing {
 }
 
 dependencies {
-    api("javax.measure:unit-api:2.2")
-    implementation("tech.units:indriya:2.2.4")
-    implementation("org.apache.commons:commons-math3:3.6.1")
-    compileOnly("org.apiguardian:apiguardian-api:1.1.2")
+    api("javax.measure:unit-api")
+    implementation("tech.units:indriya")
+    implementation("org.apache.commons:commons-math3")
+    compileOnly("org.apiguardian:apiguardian-api")
 }
 
 // Opt-in signing keeps GitHub snapshots and local development credential-free.
