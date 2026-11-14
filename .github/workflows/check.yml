@@ -16,6 +16,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: api
+      - uses: actions/checkout@v4
+        with:
+          repository: Voxel-Brew/BOM
+          ref: main
+          path: dependencies/bom
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -24,7 +29,7 @@ jobs:
         with:
           node-version: "24"
       - uses: gradle/actions/setup-gradle@v4
-      - run: ./gradlew check
+      - run: ./gradlew check --include-build ../dependencies/bom
         working-directory: api
   publish:
     needs: verify
