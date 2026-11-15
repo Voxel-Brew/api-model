@@ -1,30 +1,32 @@
-# Model API instructions
+# Repository Guidelines
 
-- Own shared document, sketch, parameter, geometry, mesh and manufacturing values and their validation helpers.
-- Keep this module under MIT with no dependency on engine, util or other AGPL application modules.
-- Keep native evaluation, persistence codecs, registries and application services in engine.
-- Preserve existing `dev.voxelbrew.engine.*` package names and validation;
-  those names do not imply an engine implementation dependency.
-- Publish `dev.voxelbrew.api:model` with its MIT license in binary and source JARs.
+## Project Structure & Module Organization
 
-## Standalone repository
+This repository publishes the Java 21 `dev.voxelbrew.api:model` library. Production contracts live under `src/main/java/dev/voxelbrew/engine`, grouped by domain (`model`, `printing`, `geometry`, `mesh`, `parameters`, and related packages). Version metadata is in `src/main/resources`. Unit tests use the repository-specific path `src/test/test/java`; optional integration and end-to-end suites belong in `src/test/integrationTest/java` and `src/test/e2eTest/java`. Gradle configuration is split between `build.gradle.kts` and reusable scripts in `gradle/`; static-analysis configuration lives in `config/quality`.
 
-- Use Java 21 and the committed Gradle wrapper. Preserve the MIT license and public Java packages.
-- Run `./gradlew spotlessApply` (Windows: `.\gradlew.bat spotlessApply`) before every commit, then review changes.
-- Run `check` and validate Maven POM dependencies when changing publication configuration.
-- Never add application-module dependencies or commit generated output or credentials.
+## Build, Test, and Development Commands
 
-## Development and verification
+- `./gradlew check` runs unit and integration tests, formatting checks, SpotBugs, and API dependency validation. This is the main pre-PR command.
+- `./gradlew test` runs the JUnit unit suite only.
+- `./gradlew integrationTest` or `./gradlew e2eTest` runs a specific extended suite.
+- `./gradlew spotlessApply` formats Java, Kotlin Gradle scripts, Markdown, YAML, and text files.
+- `./gradlew build` compiles Java 21 sources and creates binary, source, and Javadoc JARs.
+- `./gradlew publishToMavenLocal -PuseMavenLocal=true` publishes a local development artifact. Publish the BOM first when using unpublished BOM versions.
 
-- Read `README.md` and the build before changing contracts or publication.
-- Unit tests live in `src/test/test`; `integrationTest` covers service integration.
-  `check` also runs formatting, dependency checks, SpotBugs and release-script
-  tests; it does not automatically run the separate `e2eTest` task.
-- API versions are independent of the application. Preserve version properties;
-  local workspace composite builds substitute sibling API sources. Standalone
-  consumers opt into Maven local with `-PuseMavenLocal=true` after publishing
-  required dependencies.
-- Instruction-only edits need Spotless and diff review. In a dirty checkout,
-  scope formatting with `-PspotlessIdeHook=<comma-separated absolute paths>`.
-- Remote publication is separate from validation; do not publish or change release
-  versions merely to test a change.
+Use the committed wrapper (`gradlew.bat` on Windows); do not depend on a system Gradle installation.
+
+## Coding Style & Naming Conventions
+
+Spotless enforces Palantir Java Format and ktfmt; run it instead of hand-aligning code. Java compilation enables all lint warnings and treats warnings as errors. Use four-space Java indentation, `UpperCamelCase` types, `lowerCamelCase` members, and package names beneath `dev.voxelbrew.engine`. Keep public API values immutable where practical, following the existing records and defensive collection copies. Add concise Javadoc when a public contract or invariant is not self-evident.
+
+## Testing Guidelines
+
+Tests use JUnit 5. Name test classes `*Test` and methods as behavior statements, such as `documentIdentifiersRemainMonotonicAndRejectOverflow`. Cover valid behavior and boundary/error cases. No numeric coverage threshold is configured; every public contract change should include focused regression tests.
+
+## Commit & Pull Request Guidelines
+
+History favors short, imperative subjects (`Use BOM versions...`) and occasionally scoped Conventional Commit prefixes (`build:`, `ci:`, `docs:`, `feat(printing):`). Keep each commit focused. PRs should explain the API impact, identify BOM or version changes, link relevant issues, and report `./gradlew check` results. Avoid unrelated generated files, credentials, or build output. Treat published coordinates and versions as immutable.
+
+## Security & Configuration
+
+Never commit package tokens or signing keys. Supply GitHub Packages and Maven Central credentials through documented environment variables or private Gradle properties. Release workflow changes require particular care because tags and published artifacts cannot safely be replaced.
