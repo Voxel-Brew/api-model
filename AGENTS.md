@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-This repository publishes the Java 21 `dev.voxelbrew.api:model` library. Production contracts live under `src/main/java/dev/voxelbrew/engine`, grouped by domain (`model`, `printing`, `geometry`, `mesh`, `parameters`, and related packages). Version metadata is in `src/main/resources`. Unit tests use the repository-specific path `src/test/test/java`; optional integration and end-to-end suites belong in `src/test/integrationTest/java` and `src/test/e2eTest/java`. Gradle configuration is split between `build.gradle.kts` and reusable scripts in `gradle/`; static-analysis configuration lives in `config/quality`.
+This repository publishes the Java 21 `dev.voxelbrew.api:model` library. Production contracts live under `src/main/java/dev/voxelbrew/api/model`, grouped by domain (`model`, `printing`, `geometry`, `mesh`, `parameters`, and related packages). Version metadata is in `src/main/resources`. Unit tests use the repository-specific path `src/test/test/java`; optional integration and end-to-end suites belong in `src/test/integrationTest/java` and `src/test/e2eTest/java`. Gradle configuration is split between `build.gradle.kts` and reusable scripts in `gradle/`; static-analysis configuration lives in `config/quality`.
 
 ## Build, Test, and Development Commands
 
@@ -17,7 +17,7 @@ Use the committed wrapper (`gradlew.bat` on Windows); do not depend on a system 
 
 ## Coding Style & Naming Conventions
 
-Spotless enforces Palantir Java Format and ktfmt; run it instead of hand-aligning code. Java compilation enables all lint warnings and treats warnings as errors. Use four-space Java indentation, `UpperCamelCase` types, `lowerCamelCase` members, and package names beneath `dev.voxelbrew.engine`. Keep public API values immutable where practical, following the existing records and defensive collection copies. Add concise Javadoc when a public contract or invariant is not self-evident.
+Spotless enforces Palantir Java Format and ktfmt; run it instead of hand-aligning code. Java compilation enables all lint warnings and treats warnings as errors. Use four-space Java indentation, `UpperCamelCase` types, `lowerCamelCase` members, and package names beneath `dev.voxelbrew.api.model`. Keep public API values immutable where practical, following the existing records and defensive collection copies. Add concise Javadoc when a public contract or invariant is not self-evident.
 
 ## Testing Guidelines
 

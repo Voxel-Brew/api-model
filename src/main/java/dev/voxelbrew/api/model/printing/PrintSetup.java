@@ -1,0 +1,391 @@
+package dev.voxelbrew.api.model.printing;
+
+import dev.voxelbrew.api.model.BodyInstance;
+import dev.voxelbrew.api.model.CadDocument;
+import java.util.HashSet;
+import java.util.List;
+import lombok.NonNull;
+
+/** Persistent manufacturing definitions; toolpaths remain disposable derived output. */
+public record PrintSetup(
+        String id,
+        int version,
+        String backendId,
+        String printerId,
+        String materialId,
+        @NonNull ProcessSettings process,
+        List<PrintPlate> plates,
+        String activePlateId,
+        PrinterProfile printerSnapshot,
+        java.util.Map<String, String> workspaceSettings,
+        boolean supportsDisabled) {
+    public PrintSetup(
+            String id,
+            int version,
+            String backendId,
+            String printerId,
+            String materialId,
+            ProcessSettings process,
+            List<PrintPlate> plates,
+            String activePlateId,
+            PrinterProfile printerSnapshot,
+            java.util.Map<String, String> workspaceSettings) {
+        this(
+                id,
+                version,
+                backendId,
+                printerId,
+                materialId,
+                process,
+                plates,
+                activePlateId,
+                printerSnapshot,
+                workspaceSettings,
+                false);
+    }
+
+    /** Preserve every support definition while disabling its manufacturing effect. */
+    public PrintSetup withSupportsDisabled(boolean disabled) {
+        return new PrintSetup(
+                id,
+                version,
+                backendId,
+                printerId,
+                materialId,
+                process,
+                plates,
+                activePlateId,
+                printerSnapshot,
+                workspaceSettings,
+                disabled);
+    }
+
+    /** Disposable manufacturing view; editable definitions remain in the original setup. */
+    public PrintSetup forManufacturing() {
+        if (!supportsDisabled) return this;
+        return withSupports(List.of()).withProfile(backendId, printerId, materialId, process.withoutSupports());
+    }
+
+    /** UI drafts and job/view preferences; applied manufacturing values remain strongly typed. */
+    public PrintSetup withPrintTarget(String printerId) {
+        var settings = new java.util.HashMap<>(workspaceSettings);
+        if (printerId == null || printerId.isBlank()) settings.remove(PrintTarget.PRINTER_ID);
+        else settings.put(PrintTarget.PRINTER_ID, printerId);
+        return withWorkspaceSettings(settings);
+    }
+
+    public PrintSetup withWorkspaceSettings(java.util.Map<String, String> settings) {
+        return new PrintSetup(
+                id,
+                version,
+                backendId,
+                printerId,
+                materialId,
+                process,
+                plates,
+                activePlateId,
+                printerSnapshot,
+                settings,
+                supportsDisabled);
+    }
+
+    public PrintSetup(
+            String id,
+            int version,
+            String backendId,
+            String printerId,
+            String materialId,
+            ProcessSettings process,
+            List<PrintPlate> plates,
+            String activePlateId,
+            PrinterProfile printerSnapshot) {
+        this(
+                id,
+                version,
+                backendId,
+                printerId,
+                materialId,
+                process,
+                plates,
+                activePlateId,
+                printerSnapshot,
+                java.util.Map.of());
+    }
+
+    public PrintSetup(
+            String id,
+            int version,
+            String backendId,
+            String printerId,
+            String materialId,
+            ProcessSettings process,
+            List<PrintPlate> plates,
+            String activePlateId) {
+        this(id, version, backendId, printerId, materialId, process, plates, activePlateId, null);
+    }
+
+    public PrintSetup withPrinter(PrinterProfile printer) {
+        return new PrintSetup(
+                id,
+                4,
+                backendId,
+                printer.printer().id(),
+                materialId,
+                process,
+                plates,
+                activePlateId,
+                printer,
+                workspaceSettings,
+                supportsDisabled);
+    }
+
+    /** Select the nozzle used to produce this document's sliced jobs. */
+    public PrintSetup withNozzle(double diameterMm) {
+        var current = PrintProfile.resolve(this).printer();
+        if (Double.compare(current.nozzleMm(), diameterMm) == 0) return this;
+        var definition = printerSnapshot;
+        if (definition == null) {
+            var resolved = PrintProfile.resolve(this);
+            var legacy = resolved.printer();
+            definition = new PrinterProfile(
+                    new PrintProfile.Printer(
+                            legacy.id(),
+                            legacy.name().replace("Generic Marlin", "Marlin").replace(" / 0.4 mm", ""),
+                            legacy.nozzleMm(),
+                            legacy.bed(),
+                            legacy.excludedZones(),
+                            legacy.usableHeight(),
+                            legacy.firmware(),
+                            legacy.outputFormat()),
+                    "Generic",
+                    resolved.material().filamentDiameter(),
+                    1,
+                    true,
+                    false);
+        }
+        return withPrinter(definition.withNozzle(diameterMm));
+    }
+
+    public PrintSetup(
+            String id,
+            int version,
+            String backendId,
+            String printerId,
+            String materialId,
+            ProcessSettings process,
+            List<BodyInstance> instances,
+            List<SupportVolume> supports) {
+        this(
+                id,
+                version,
+                backendId,
+                printerId,
+                materialId,
+                process,
+                List.of(new PrintPlate("plate-1", instances, supports)),
+                "plate-1");
+    }
+
+    public PrintSetup {
+        workspaceSettings = java.util.Map.copyOf(workspaceSettings);
+        CadDocument.identifier(id, "print setup ID");
+        if (version != 1 && version != 2 && version != 3 && version != 4)
+            throw new IllegalArgumentException("unsupported print setup version " + version);
+        if (printerSnapshot != null
+                && (version != 4 || !printerId.equals(printerSnapshot.printer().id())))
+            throw new IllegalArgumentException("Printer snapshot requires version 4 and matching ID");
+        if (version == 4 && printerSnapshot == null) throw new IllegalArgumentException("Missing printer snapshot");
+        CadDocument.identifier(backendId, "slicer backend ID");
+        CadDocument.identifier(printerId, "printer profile ID");
+        CadDocument.identifier(materialId, "material profile ID");
+        plates = List.copyOf(plates);
+        if (plates.isEmpty()) throw new IllegalArgumentException("At least one plate is required");
+        if (version == 1 && (plates.size() != 1 || !activePlateId.equals("plate-1")))
+            throw new IllegalArgumentException("Multiple plates require print setup version 2");
+        if (version < 3 && plates.stream().anyMatch(p -> !p.name().isEmpty()))
+            throw new IllegalArgumentException("Named plates require print setup version 3");
+        var ids = new HashSet<String>();
+        for (var plate : plates)
+            if (!ids.add(plate.id())) throw new IllegalArgumentException("Duplicate plate " + plate.id());
+        if (!ids.contains(activePlateId)) throw new IllegalArgumentException("Missing active plate " + activePlateId);
+    }
+
+    public PrintPlate activePlate() {
+        return plates.stream()
+                .filter(p -> p.id().equals(activePlateId))
+                .findFirst()
+                .orElseThrow();
+    }
+
+    /** Only the selected plate is handed to existing validators, exporters and slicers. */
+    public List<BodyInstance> instances() {
+        return activePlate().instances();
+    }
+
+    public List<SupportVolume> supports() {
+        return activePlate().supports();
+    }
+
+    public PrintSetup selectPlate(String plateId) {
+        return new PrintSetup(
+                id,
+                version,
+                backendId,
+                printerId,
+                materialId,
+                process,
+                plates,
+                plateId,
+                printerSnapshot,
+                workspaceSettings,
+                supportsDisabled);
+    }
+
+    public PrintSetup addPlate(String plateId) {
+        var next = new java.util.ArrayList<>(plates);
+        next.add(new PrintPlate(plateId, List.of(), List.of()));
+        return new PrintSetup(
+                id,
+                Math.max(2, version),
+                backendId,
+                printerId,
+                materialId,
+                process,
+                next,
+                plateId,
+                printerSnapshot,
+                workspaceSettings,
+                supportsDisabled);
+    }
+
+    public PrintSetup renamePlate(String plateId, String name) {
+        var plate = plates.stream()
+                .filter(p -> p.id().equals(plateId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Missing plate " + plateId));
+        var renamed = plate.withName(name);
+        if (plate.equals(renamed)) return this;
+        return new PrintSetup(
+                id,
+                Math.max(3, version),
+                backendId,
+                printerId,
+                materialId,
+                process,
+                plates.stream().map(p -> p.id().equals(plateId) ? renamed : p).toList(),
+                activePlateId,
+                printerSnapshot,
+                workspaceSettings,
+                supportsDisabled);
+    }
+
+    public PrintSetup moveInstance(String instanceId, String targetPlateId) {
+        if (targetPlateId.equals(activePlateId)) return this;
+        var target = plates.stream()
+                .filter(p -> p.id().equals(targetPlateId))
+                .findFirst()
+                .orElseThrow();
+        var instance = instances().stream()
+                .filter(i -> i.id().equals(instanceId))
+                .findFirst()
+                .orElseThrow();
+        var targetInstances = new java.util.ArrayList<>(target.instances());
+        targetInstances.add(instance);
+        var targetSupports = new java.util.ArrayList<>(target.supports());
+        targetSupports.addAll(supports().stream()
+                .filter(s -> s.instanceId().equals(instanceId))
+                .toList());
+        var destination = new PrintPlate(targetPlateId, target.name(), targetInstances, targetSupports);
+        var source = new PrintPlate(
+                activePlateId,
+                activePlate().name(),
+                instances().stream().filter(i -> !i.id().equals(instanceId)).toList(),
+                supports().stream()
+                        .filter(s -> !s.instanceId().equals(instanceId))
+                        .toList());
+        return new PrintSetup(
+                id,
+                version,
+                backendId,
+                printerId,
+                materialId,
+                process,
+                plates.stream()
+                        .map(p ->
+                                p.id().equals(targetPlateId) ? destination : p.id().equals(activePlateId) ? source : p)
+                        .toList(),
+                activePlateId,
+                printerSnapshot,
+                workspaceSettings,
+                supportsDisabled);
+    }
+
+    public PrintSetup removeActivePlate() {
+        if (plates.size() == 1) throw new IllegalArgumentException("Cannot remove the last plate");
+        var next = plates.stream().filter(p -> !p.id().equals(activePlateId)).toList();
+        return new PrintSetup(
+                id,
+                version,
+                backendId,
+                printerId,
+                materialId,
+                process,
+                next,
+                next.getFirst().id(),
+                printerSnapshot,
+                workspaceSettings,
+                supportsDisabled);
+    }
+
+    private PrintSetup replaceActive(PrintPlate plate) {
+        return new PrintSetup(
+                id,
+                version,
+                backendId,
+                printerId,
+                materialId,
+                process,
+                plates.stream()
+                        .map(p -> p.id().equals(activePlateId) ? plate : p)
+                        .toList(),
+                activePlateId,
+                printerSnapshot,
+                workspaceSettings,
+                supportsDisabled);
+    }
+
+    public static PrintSetup empty() {
+        return new PrintSetup(
+                "print",
+                1,
+                "prusa-slicer",
+                "generic-marlin-200-0.4",
+                "PLA",
+                ProcessSettings.DEFAULT,
+                List.of(),
+                List.of());
+    }
+
+    public PrintSetup withInstances(List<BodyInstance> next) {
+        return replaceActive(new PrintPlate(activePlateId, activePlate().name(), next, supports()));
+    }
+
+    public PrintSetup withSupports(List<SupportVolume> next) {
+        return replaceActive(new PrintPlate(activePlateId, activePlate().name(), instances(), next));
+    }
+
+    public PrintSetup withProfile(String backend, String printer, String material, ProcessSettings settings) {
+        return new PrintSetup(
+                id,
+                printer.equals(printerId) ? version : Math.min(version, 3),
+                backend,
+                printer,
+                material,
+                settings,
+                plates,
+                activePlateId,
+                printer.equals(printerId) ? printerSnapshot : null,
+                workspaceSettings,
+                supportsDisabled);
+    }
+}
