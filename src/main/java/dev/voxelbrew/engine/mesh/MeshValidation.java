@@ -4,10 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /** Closed-solid preflight, welding coincident face-boundary vertices within a 1e-7 mm grid. */
-public final class MeshValidation {
+@lombok.experimental.UtilityClass
+public class MeshValidation {
     public static final double WELD_MM = 1e-7;
-
-    private MeshValidation() {}
 
     private record Point(long x, long y, long z) {}
 
