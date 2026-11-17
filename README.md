@@ -4,7 +4,7 @@
 
 Java 21 and the committed Gradle wrapper are required. Run `./gradlew check`
 (`.\gradlew.bat check` on Windows). This MIT library publishes as
-`dev.voxelbrew.api:model:0.1.0-SNAPSHOT`; Java package names remain unchanged.
+`dev.voxelbrew.api:model:0.1.0-SNAPSHOT`.
 Use `./gradlew publishToMavenLocal` for local publication. Consumers opt in with
 `-PuseMavenLocal=true`. `publishApiPublicationToGitHubPackagesRepository` publishes remotely.
 
@@ -98,3 +98,10 @@ The BOM is metadata only and adds no application libraries.
 For local development, publish `../../BOM` to Maven local first and pass
 `-PuseMavenLocal=true`, or use the parent workspace composite.
 Standalone builds require the selected BOM to be published before use.
+
+## Virtual UI
+
+The `dev.voxelbrew.api.vui` package provides shared frontend-neutral controls
+for import and export dialogs. `Component`, `Input`, and `Layout` form the
+Virtual UI tree, including text, selection, numeric, and file chooser inputs.
+Hosts interpret these contracts without JavaFX or CLI dependencies in plugins.
