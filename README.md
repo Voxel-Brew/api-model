@@ -101,7 +101,17 @@ Standalone builds require the selected BOM to be published before use.
 
 ## Virtual UI
 
-The `dev.voxelbrew.api.vui` package provides shared frontend-neutral controls
+The `dev.voxelbrew.api.model.vui` package provides shared frontend-neutral controls
 for import and export dialogs. `Component`, `Input`, and `Layout` form the
 Virtual UI tree, including text, selection, numeric, and file chooser inputs.
 Hosts interpret these contracts without JavaFX or CLI dependencies in plugins.
+
+## Package migration
+
+Model values now live under `dev.voxelbrew.api.model` (with geometry, mesh, printing,
+parameters, sketch, construction, and units subpackages). Shared Virtual UI types
+move from `dev.voxelbrew.api.vui` to `dev.voxelbrew.api.model.vui`.
+This is a source and binary incompatible package rename. Update imports and service
+registration filenames, then recompile consumers and plugin providers against the
+matching model, import, export, printer, and slicer API snapshots. Maven coordinates
+and release versions are unchanged; deploy the matching application and APIs together.
