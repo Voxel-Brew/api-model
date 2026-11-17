@@ -7,8 +7,8 @@ import java.util.*;
 import org.apache.commons.math3.linear.*;
 
 /** Exact analytic/rational curves and cubic interpolation; samples are only for display. */
-public final class SketchCurves {
-    private SketchCurves() {}
+@lombok.experimental.UtilityClass
+public class SketchCurves {
 
     public record BSpline(int degree, List<Vec> poles, List<Double> knots) {
         public BSpline {

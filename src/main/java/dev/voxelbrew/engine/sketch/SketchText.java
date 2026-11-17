@@ -10,8 +10,8 @@ import java.util.*;
 import lombok.NonNull;
 
 /** Headless font outlines, persisted so reopening never depends on installed fonts. */
-public final class SketchText {
-    private SketchText() {}
+@lombok.experimental.UtilityClass
+public class SketchText {
 
     public record Glyph(double advance, List<List<Entity>> contours) {
         public Glyph {

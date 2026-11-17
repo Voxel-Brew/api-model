@@ -11,8 +11,8 @@ import tech.units.indriya.quantity.Quantities;
 import tech.units.indriya.unit.Units;
 
 /** JSR 385 quantities and conversions at CAD, UI and manufacturing boundaries. */
-public final class Measurements {
-    private Measurements() {}
+@lombok.experimental.UtilityClass
+public class Measurements {
 
     public static final Unit<Length> METRE = Units.METRE;
     public static final Unit<Length> MILLIMETRE = javax.measure.MetricPrefix.MILLI(METRE);

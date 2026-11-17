@@ -5,10 +5,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /** Destination selected when a plate is sliced. A profile-only job cannot be uploaded. */
-public final class PrintTarget {
+@lombok.experimental.UtilityClass
+public class PrintTarget {
     public static final String PRINTER_ID = "print.target.printer";
-
-    private PrintTarget() {}
 
     public static PrintArtifact attach(PrintArtifact artifact, java.util.List<String> lines, PrintSetup setup) {
         String printerId = setup.workspaceSettings().getOrDefault(PRINTER_ID, "");

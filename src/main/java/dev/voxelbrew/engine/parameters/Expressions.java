@@ -11,8 +11,8 @@ import javax.measure.Unit;
 import lombok.NonNull;
 
 /** Bounded arithmetic parser. No scripting engine, reflection or external evaluation. */
-public final class Expressions {
-    private Expressions() {}
+@lombok.experimental.UtilityClass
+public class Expressions {
 
     private static final Set<String> FUNCTIONS =
             Set.of("abs", "sqrt", "min", "max", "sin", "cos", "tan", "asin", "acos", "atan", "floor", "ceil", "round");
