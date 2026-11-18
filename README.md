@@ -115,9 +115,3 @@ This is a source and binary incompatible package rename. Update imports and serv
 registration filenames, then recompile consumers and plugin providers against the
 matching model, import, export, printer, and slicer API snapshots. Maven coordinates
 and release versions are unchanged; deploy the matching application and APIs together.
-
-## Secret Virtual UI inputs
-
-`PasswordField(id, label, value)` describes a masked single-line input. Hosts must
-render it without showing or echoing the value. Its diagnostic string is redacted;
-the value accessor remains available for validated settings collection.
