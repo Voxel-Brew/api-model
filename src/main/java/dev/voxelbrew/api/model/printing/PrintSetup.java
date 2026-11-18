@@ -16,7 +16,7 @@ public record PrintSetup(
         @NonNull ProcessSettings process,
         List<PrintPlate> plates,
         String activePlateId,
-        PrinterProfile printerSnapshot,
+        HardwareSettings printerSnapshot,
         java.util.Map<String, String> workspaceSettings,
         boolean supportsDisabled) {
     public PrintSetup(
@@ -28,7 +28,7 @@ public record PrintSetup(
             ProcessSettings process,
             List<PrintPlate> plates,
             String activePlateId,
-            PrinterProfile printerSnapshot,
+            HardwareSettings printerSnapshot,
             java.util.Map<String, String> workspaceSettings) {
         this(
                 id,
@@ -98,7 +98,7 @@ public record PrintSetup(
             ProcessSettings process,
             List<PrintPlate> plates,
             String activePlateId,
-            PrinterProfile printerSnapshot) {
+            HardwareSettings printerSnapshot) {
         this(
                 id,
                 version,
@@ -124,7 +124,7 @@ public record PrintSetup(
         this(id, version, backendId, printerId, materialId, process, plates, activePlateId, null);
     }
 
-    public PrintSetup withPrinter(PrinterProfile printer) {
+    public PrintSetup withPrinter(HardwareSettings printer) {
         return new PrintSetup(
                 id,
                 4,
@@ -147,7 +147,7 @@ public record PrintSetup(
         if (definition == null) {
             var resolved = PrintProfile.resolve(this);
             var legacy = resolved.printer();
-            definition = new PrinterProfile(
+            definition = new HardwareSettings(
                     new PrintProfile.Printer(
                             legacy.id(),
                             legacy.name().replace("Generic Marlin", "Marlin").replace(" / 0.4 mm", ""),

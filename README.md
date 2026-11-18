@@ -44,7 +44,7 @@ available without signing credentials.
 Publish a release BOM to Maven Central before releasing APIs that import it.
 The BOM contains constraints only, so it can precede its managed artifacts.
 For the first API release, publish **model**, then **export/import/printer**, then
-**slicer**. Slicer depends on model and export. Allow Central's public repository
+**slicer**. Slicer depends on model, export, and printer. Allow Central's public repository
 to propagate each dependency before releasing its consumers. API versions remain
 independent of application versions.
 
