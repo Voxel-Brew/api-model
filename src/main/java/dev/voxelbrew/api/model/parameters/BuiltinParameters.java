@@ -23,11 +23,12 @@ public final class BuiltinParameters {
 
     private synchronized String projectLocation(String property) {
         if (projectPath == null) return property.equals("name") ? "Untitled" : "";
-        String filename = projectPath.getFileName().toString();
+        Path file = projectPath.getFileName();
+        String filename = file == null ? "" : file.toString();
+        Path parent = projectPath.getParent();
         return switch (property) {
             case "path" -> projectPath.toString();
-            case "folder" ->
-                projectPath.getParent() == null ? "" : projectPath.getParent().toString();
+            case "folder" -> parent == null ? "" : parent.toString();
             case "filename" -> filename;
             case "name" -> {
                 int dot = filename.lastIndexOf('.');
