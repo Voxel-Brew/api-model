@@ -23,6 +23,12 @@ Spotless enforces Palantir Java Format and ktfmt; run it instead of hand-alignin
 
 Tests use JUnit 5. Name test classes `*Test` and methods as behavior statements, such as `documentIdentifiersRemainMonotonicAndRejectOverflow`. Cover valid behavior and boundary/error cases. No numeric coverage threshold is configured; every public contract change should include focused regression tests.
 
+## Pre-commit SpotBugs
+
+Before committing, run `./gradlew spotbugsMain` from this API repository or
+`./gradlew :model:spotbugsMain` from the composite workspace.
+Use `.\gradlew.bat` in place of `./gradlew` on Windows.
+
 ## Commit & Pull Request Guidelines
 
 History favors short, imperative subjects (`Use BOM versions...`) and occasionally scoped Conventional Commit prefixes (`build:`, `ci:`, `docs:`, `feat(printing):`). Keep each commit focused. PRs should explain the API impact, identify BOM or version changes, link relevant issues, and report `./gradlew check` results. Avoid unrelated generated files, credentials, or build output. Treat published coordinates and versions as immutable.
