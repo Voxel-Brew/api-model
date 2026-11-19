@@ -115,3 +115,9 @@ This is a source and binary incompatible package rename. Update imports and serv
 registration filenames, then recompile consumers and plugin providers against the
 matching model, import, export, printer, and slicer API snapshots. Maven coordinates
 and release versions are unchanged; deploy the matching application and APIs together.
+
+## SpotBugs
+
+For a standalone checkout, set `VOXELBREW_BOM_DIR` to a VoxelBrew BOM checkout that
+contains `spotbugs-conventions`. The workspace and CI supply the convention automatically.
+Run `./gradlew spotbugsMain` directly or as part of `./gradlew check`.
