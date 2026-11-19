@@ -75,7 +75,7 @@ public class SketchText {
             var vector = font.createGlyphVector(context, new String(Character.toChars(code)));
             var iterator = vector.getOutline().getPathIterator(null);
             var contours = new ArrayList<List<Entity>>();
-            var current = new ArrayList<Entity>();
+            ArrayList<Entity> current = null;
             Vec start = null, previous = null;
             double[] coordinates = new double[6];
             int index = 0;
