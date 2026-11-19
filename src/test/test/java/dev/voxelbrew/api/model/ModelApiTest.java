@@ -6,6 +6,7 @@ import dev.voxelbrew.api.model.mesh.MeshOptions;
 import dev.voxelbrew.api.model.parameters.BuiltinParameters;
 import dev.voxelbrew.api.model.printing.ManufacturingModel;
 import dev.voxelbrew.api.model.printing.PrintProfile;
+import java.nio.file.Path;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
@@ -45,6 +46,17 @@ class ModelApiTest {
         assertThat(MeshOptions.DEFAULT).isNotNull();
         assertThat(((String) new BuiltinParameters().value("vb.version")).contains("${"))
                 .isFalse();
+    }
+
+    @Test
+    void projectLocationHandlesFilesystemRoot() {
+        Path root = Path.of("").toAbsolutePath().getRoot();
+        var parameters = new BuiltinParameters();
+        parameters.projectPath(root);
+
+        assertThat(parameters.value("vb.project.path")).isEqualTo(root.toString());
+        assertThat(parameters.value("vb.project.folder")).isEqualTo("");
+        assertThat(parameters.value("vb.project.filename")).isEqualTo("");
     }
 
     @Test
