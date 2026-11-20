@@ -10,9 +10,10 @@ public record BodyStyle(@NonNull String material, @NonNull String color) {
     /** Validates the identifier of a body whose style or name is being edited. */
     public static void requireBodyId(String id) {
         // Evaluated IDs append an output name to a feature ID (which can itself be 128 chars).
-        if (id == null || !id.matches("[A-Za-z0-9][A-Za-z0-9_.-]{0,255}"))
+        if (id == null || !id.matches("[A-Za-z0-9][A-Za-z0-9_.-]{0,255}")) {
             throw new IllegalArgumentException(
                     "Body ID must contain 1–256 letters, digits, dots, underscores or hyphens");
+        }
     }
 
     public BodyStyle {

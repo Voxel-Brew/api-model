@@ -10,8 +10,9 @@ public record PlanarFace(int faceIndex, double nx, double ny, double nz, double 
                 || !Double.isFinite(nx)
                 || !Double.isFinite(ny)
                 || !Double.isFinite(nz)
-                || Math.abs(Math.hypot(Math.hypot(nx, ny), nz) - 1) > 1e-9)
+                || Math.abs(Math.hypot(Math.hypot(nx, ny), nz) - 1) > 1e-9) {
             throw new IllegalArgumentException("Invalid analytic face plane");
+        }
     }
 
     /** Deterministic right-handed axes, with the origin projected from the model origin. */

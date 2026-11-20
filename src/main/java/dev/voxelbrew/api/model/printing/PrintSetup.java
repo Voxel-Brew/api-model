@@ -114,24 +114,29 @@ public record PrintSetup(
     public PrintSetup {
         workspaceSettings = java.util.Map.copyOf(workspaceSettings);
         CadDocument.identifier(id, "print setup ID");
-        if (version != 1 && version != 2 && version != 3 && version != 4)
+        if (version != 1 && version != 2 && version != 3 && version != 4) {
             throw new IllegalArgumentException("unsupported print setup version " + version);
+        }
         if (printerSnapshot != null
-                && (version != 4 || !printerId.equals(printerSnapshot.printer().id())))
+                && (version != 4 || !printerId.equals(printerSnapshot.printer().id()))) {
             throw new IllegalArgumentException("Printer snapshot requires version 4 and matching ID");
+        }
         if (version == 4 && printerSnapshot == null) throw new IllegalArgumentException("Missing printer snapshot");
         CadDocument.identifier(backendId, "slicer backend ID");
         CadDocument.identifier(printerId, "printer profile ID");
         CadDocument.identifier(materialId, "material profile ID");
         plates = List.copyOf(plates);
         if (plates.isEmpty()) throw new IllegalArgumentException("At least one plate is required");
-        if (version == 1 && (plates.size() != 1 || !activePlateId.equals("plate-1")))
+        if (version == 1 && (plates.size() != 1 || !activePlateId.equals("plate-1"))) {
             throw new IllegalArgumentException("Multiple plates require print setup version 2");
-        if (version < 3 && plates.stream().anyMatch(p -> !p.name().isEmpty()))
+        }
+        if (version < 3 && plates.stream().anyMatch(p -> !p.name().isEmpty())) {
             throw new IllegalArgumentException("Named plates require print setup version 3");
+        }
         var ids = new HashSet<String>();
-        for (var plate : plates)
+        for (var plate : plates) {
             if (!ids.add(plate.id())) throw new IllegalArgumentException("Duplicate plate " + plate.id());
+        }
         if (!ids.contains(activePlateId)) throw new IllegalArgumentException("Missing active plate " + activePlateId);
     }
 
@@ -161,7 +166,9 @@ public record PrintSetup(
     public PrintSetup withPrintTarget(String printerId) {
         var settings = new java.util.HashMap<>(workspaceSettings);
         if (printerId == null || printerId.isBlank()) settings.remove(PrintTarget.PRINTER_ID);
-        else settings.put(PrintTarget.PRINTER_ID, printerId);
+        else {
+            settings.put(PrintTarget.PRINTER_ID, printerId);
+        }
         return withWorkspaceSettings(settings);
     }
 
@@ -323,8 +330,10 @@ public record PrintSetup(
                 materialId,
                 process,
                 plates.stream()
-                        .map(p ->
-                                p.id().equals(targetPlateId) ? destination : p.id().equals(activePlateId) ? source : p)
+                        .map(p -> {
+                            if (p.id().equals(targetPlateId)) return destination;
+                            return p.id().equals(activePlateId) ? source : p;
+                        })
                         .toList(),
                 activePlateId,
                 printerSnapshot,

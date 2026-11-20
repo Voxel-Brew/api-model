@@ -8,7 +8,8 @@ public record RadioButtonGroup(@NonNull String id, @NonNull String label, List<S
         implements Input {
     public RadioButtonGroup {
         choices = List.copyOf(choices);
-        if (choices.isEmpty() || !choices.contains(selected))
+        if (choices.isEmpty() || !choices.contains(selected)) {
             throw new IllegalArgumentException("Selected value must be one of the choices");
+        }
     }
 }

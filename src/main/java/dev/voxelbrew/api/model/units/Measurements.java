@@ -94,8 +94,9 @@ public class Measurements {
         var bases = system.getBaseUnits();
         if (bases == null || bases.isEmpty()) return system;
         Unit<?> result = ONE;
-        for (var base : bases.entrySet())
+        for (var base : bases.entrySet()) {
             result = result.multiply(canonical(base.getKey()).pow(base.getValue()));
+        }
         return result;
     }
 
@@ -107,8 +108,9 @@ public class Measurements {
     }
 
     public static Quantity<?> normalized(Quantity<?> quantity) {
-        for (int power : powers(quantity.getUnit()).values())
+        for (int power : powers(quantity.getUnit()).values()) {
             if (Math.abs(power) > 8) throw new IllegalArgumentException("Unsupported unit powers (limit 8)");
+        }
         return to(quantity, canonical(quantity.getUnit()));
     }
 }

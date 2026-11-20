@@ -7,8 +7,9 @@ import lombok.NonNull;
 public final class ConstructionGeometry {
     public record Vector(double x, double y, double z) {
         public Vector {
-            if (!Double.isFinite(x) || !Double.isFinite(y) || !Double.isFinite(z))
+            if (!Double.isFinite(x) || !Double.isFinite(y) || !Double.isFinite(z)) {
                 throw new IllegalArgumentException("Construction coordinates must be finite");
+            }
         }
 
         public Vector plus(Vector other) {

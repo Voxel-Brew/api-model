@@ -8,7 +8,8 @@ public record ComboBox(@NonNull String id, @NonNull String label, List<String> c
         implements Input {
     public ComboBox {
         choices = List.copyOf(choices);
-        if (choices.isEmpty() || !choices.contains(selected))
+        if (choices.isEmpty() || !choices.contains(selected)) {
             throw new IllegalArgumentException("Selected value must be one of the choices");
+        }
     }
 }

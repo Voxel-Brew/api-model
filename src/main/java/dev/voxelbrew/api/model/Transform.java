@@ -24,14 +24,20 @@ public final class Transform {
     public Transform(double... matrix) {
         if (matrix.length != 12) throw new IllegalArgumentException("Placement requires 12 values");
         m = matrix.clone();
-        for (double v : m) if (!Double.isFinite(v)) throw new IllegalArgumentException("Nonfinite placement");
-        for (int r = 0; r < 3; r++)
+        for (double v : m) {
+            if (!Double.isFinite(v)) {
+                throw new IllegalArgumentException("Nonfinite placement");
+            }
+        }
+        for (int r = 0; r < 3; r++) {
             for (int s = 0; s < 3; s++) {
                 double dot = 0;
                 for (int c = 0; c < 3; c++) dot += m[4 * r + c] * m[4 * s + c];
-                if (Math.abs(dot - (r == s ? 1 : 0)) > 1e-9)
+                if (Math.abs(dot - (r == s ? 1 : 0)) > 1e-9) {
                     throw new IllegalArgumentException("Placement must be rigid");
+                }
             }
+        }
         double det = m[0] * (m[5] * m[10] - m[6] * m[9])
                 - m[1] * (m[4] * m[10] - m[6] * m[8])
                 + m[2] * (m[4] * m[9] - m[5] * m[8]);
@@ -56,7 +62,11 @@ public final class Transform {
     public Transform compose(Transform before) {
         double[] b = before.m, out = new double[12];
         for (int r = 0; r < 3; r++) {
-            for (int c = 0; c < 3; c++) for (int k = 0; k < 3; k++) out[4 * r + c] += m[4 * r + k] * b[4 * k + c];
+            for (int c = 0; c < 3; c++) {
+                for (int k = 0; k < 3; k++) {
+                    out[4 * r + c] += m[4 * r + k] * b[4 * k + c];
+                }
+            }
             out[4 * r + 3] = m[4 * r + 3];
             for (int k = 0; k < 3; k++) out[4 * r + 3] += m[4 * r + k] * b[4 * k + 3];
         }

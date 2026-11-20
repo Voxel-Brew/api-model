@@ -32,10 +32,12 @@ public record PrintProfile(
 
             bed = List.copyOf(bed);
             excludedZones = excludedZones.stream().map(List::copyOf).toList();
-            if (bed.size() < 3 || excludedZones.stream().anyMatch(p -> p.size() < 3))
+            if (bed.size() < 3 || excludedZones.stream().anyMatch(p -> p.size() < 3)) {
                 throw new IllegalArgumentException("bed and exclusion polygons require at least three points");
-            if (!Double.isFinite(nozzleMm) || nozzleMm <= 0 || !Double.isFinite(usableHeight) || usableHeight <= 0)
+            }
+            if (!Double.isFinite(nozzleMm) || nozzleMm <= 0 || !Double.isFinite(usableHeight) || usableHeight <= 0) {
                 throw new IllegalArgumentException("invalid nozzle or build height");
+            }
         }
 
         public Quantity<Length> nozzleDiameterQuantity() {
@@ -61,7 +63,9 @@ public record PrintProfile(
                     || !Double.isFinite(nozzleTemperature)
                     || nozzleTemperature <= 0
                     || !Double.isFinite(bedTemperature)
-                    || bedTemperature < 0) throw new IllegalArgumentException("Invalid material profile");
+                    || bedTemperature < 0) {
+                throw new IllegalArgumentException("Invalid material profile");
+            }
         }
 
         public Quantity<Length> filamentDiameterQuantity() {
@@ -79,9 +83,11 @@ public record PrintProfile(
 
     /** Stable profile identity preserving a custom rectangular build volume in the document. */
     public static String rectangularPrinterId(double width, double depth, double height) {
-        for (double value : new double[] {width, depth, height})
-            if (!Double.isFinite(value) || value <= 0 || value > 10000)
+        for (double value : new double[] {width, depth, height}) {
+            if (!Double.isFinite(value) || value <= 0 || value > 10000) {
                 throw new IllegalArgumentException("Build dimensions must be greater than 0 and at most 10000 mm");
+            }
+        }
         return "generic-marlin-rect-" + width + "x" + depth + "x" + height + "-0.4";
     }
 
@@ -111,8 +117,9 @@ public record PrintProfile(
             depth = Double.parseDouble(dimensions[1]);
             height = Double.parseDouble(dimensions[2]);
             rectangularPrinterId(width, depth, height);
-        } else if (!setup.printerId().equals("generic-marlin-200-0.4"))
+        } else if (!setup.printerId().equals("generic-marlin-200-0.4")) {
             throw new IllegalArgumentException("Missing printer profile: " + setup.printerId());
+        }
         var printer = new Printer(
                 setup.printerId(),
                 "Generic Marlin " + width + " × " + depth + " × " + height + " mm / 0.4 mm",

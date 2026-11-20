@@ -30,8 +30,9 @@ public record ProcessSettings(
             0);
 
     private static void range(String field, double value, double min, double max) {
-        if (!Double.isFinite(value) || value < min || value > max)
+        if (!Double.isFinite(value) || value < min || value > max) {
             throw new IllegalArgumentException(field + " must be between " + min + " and " + max);
+        }
     }
 
     public ProcessSettings(

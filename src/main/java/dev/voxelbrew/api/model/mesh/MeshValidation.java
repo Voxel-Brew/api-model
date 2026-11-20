@@ -50,8 +50,9 @@ public class MeshValidation {
 
     public static void requireClosed(MeshData mesh) {
         var report = inspect(mesh);
-        if (!report.closed())
+        if (!report.closed()) {
             throw new IllegalArgumentException("Mesh is not closed and consistently oriented: " + report);
+        }
     }
 
     public static Report inspect(MeshData mesh) {
@@ -87,8 +88,9 @@ public class MeshValidation {
     }
 
     private static long quantize(double value) {
-        if (Math.abs(value / WELD_MM) >= Long.MAX_VALUE)
+        if (Math.abs(value / WELD_MM) >= Long.MAX_VALUE) {
             throw new IllegalArgumentException("Coordinate exceeds mesh welding range");
+        }
         return Math.round(value / WELD_MM);
     }
 

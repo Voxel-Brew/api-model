@@ -36,21 +36,24 @@ public class SketchCurves {
             }
             double u = begin + Math.clamp(t, 0, 1) * (end - begin);
             int span = p.size() - 1;
-            if (u < end)
-                for (int i = d; i < p.size(); i++)
+            if (u < end) {
+                for (int i = d; i < p.size(); i++) {
                     if (u < k.get(i + 1)) {
                         span = i;
                         break;
                     }
+                }
+            }
             var work = new Vec[d + 1];
             for (int j = 0; j <= d; j++) work[j] = p.get(span - d + j);
-            for (int r = 1; r <= d; r++)
+            for (int r = 1; r <= d; r++) {
                 for (int j = d; j >= r; j--) {
                     int i = span - d + j;
                     double denominator = k.get(i + d - r + 1) - k.get(i);
                     double a = denominator == 0 ? 0 : (u - k.get(i)) / denominator;
                     work[j] = work[j - 1].mix(work[j], a);
                 }
+            }
             return work[d].times(Math.pow(end - begin, order));
         }
 
@@ -75,8 +78,9 @@ public class SketchCurves {
             for (int i = 0; i < degree; i++) poles.add(poles.get(i));
             for (int i = 0; i < poles.size() + degree + 1; i++) knots.add((double) i);
         } else {
-            for (int i = 0; i < original + degree + 1; i++)
+            for (int i = 0; i < original + degree + 1; i++) {
                 knots.add((double) Math.clamp(i - degree, 0, original - degree));
+            }
         }
         return new BSpline(degree, poles, knots);
     }
@@ -207,9 +211,10 @@ public class SketchCurves {
         var spans = e.kind() == Kind.FIT_SPLINE ? fitSegments(e) : List.<Entity>of();
         var points = points(e);
         var control = e.kind() == Kind.CONTROL_SPLINE ? control(e) : null;
-        for (int i = 0; i <= count; i++)
+        for (int i = 0; i <= count; i++) {
             result.add(
                     control != null ? control.at((double) i / count, 0) : fitAt(spans, points, (double) i / count, 0));
+        }
         return List.copyOf(result);
     }
 

@@ -6,4 +6,8 @@ public final class ModelException extends IllegalArgumentException {
     public ModelException(String featureId, String message) {
         super("Feature '" + featureId + "': " + message);
     }
+
+    public ModelException(String featureId, String message, Throwable cause) {
+        super("Feature '" + featureId + "': " + message, cause);
+    }
 }

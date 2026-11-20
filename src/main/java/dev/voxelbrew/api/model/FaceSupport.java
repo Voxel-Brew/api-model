@@ -44,17 +44,21 @@ public record FaceSupport(@NonNull Feature.BodyRef body, double nx, double ny, d
                 || Math.abs(Math.hypot(Math.hypot(nx, ny), nz) - 1) > 1e-9
                 || count < 1
                 || rank < 0
-                || rank >= count) throw new IllegalArgumentException("Invalid supporting plane reference");
+                || rank >= count) {
+            throw new IllegalArgumentException("Invalid supporting plane reference");
+        }
     }
 
     public Transform resolve(List<PlanarFace> faces, Transform previous) {
         var planes = planes(faces);
-        if (planes.size() != count)
+        if (planes.size() != count) {
             throw new IllegalArgumentException("Supporting face planes changed; choose the sketch plane again");
+        }
         double offset = planes.get(rank);
         double[] m = previous.matrix();
-        if (Math.abs(m[2] - nx) + Math.abs(m[6] - ny) + Math.abs(m[10] - nz) > 1e-8)
+        if (Math.abs(m[2] - nx) + Math.abs(m[6] - ny) + Math.abs(m[10] - nz) > 1e-8) {
             throw new IllegalArgumentException("Sketch axes do not match the supporting face");
+        }
         m[3] = nx * offset;
         m[7] = ny * offset;
         m[11] = nz * offset;
@@ -68,8 +72,9 @@ public record FaceSupport(@NonNull Feature.BodyRef body, double nx, double ny, d
                 .sorted()
                 .toList();
         var unique = new ArrayList<Double>();
-        for (double value : ordered)
+        for (double value : ordered) {
             if (unique.isEmpty() || Math.abs(value - unique.getLast()) > 1e-6) unique.add(value);
+        }
         return unique;
     }
 }

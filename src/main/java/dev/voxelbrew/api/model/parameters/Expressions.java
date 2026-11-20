@@ -29,8 +29,9 @@ public class Expressions {
         }
 
         Parser(String input, Function<String, ?> names, ParameterUnit unit) {
-            if (input == null || input.isBlank() || input.length() > 512)
+            if (input == null || input.isBlank() || input.length() > 512) {
                 throw new IllegalArgumentException("Expression must contain 1–512 characters");
+            }
             this.input = input;
             this.names = names;
             this.unit = unit;
@@ -69,9 +70,14 @@ public class Expressions {
                     if (q instanceof String || next instanceof String) {
                         q = format(q) + format(next);
                         if (((String) q).length() > 4096) throw error("Text result exceeds 4096 characters");
-                    } else q = add(numeric(q), numeric(next), unit);
-                } else if (take('-')) q = add(numeric(q), numeric(product()).negate(), unit);
-                else return q;
+                    } else {
+                        q = add(numeric(q), numeric(next), unit);
+                    }
+                } else if (take('-')) {
+                    q = add(numeric(q), numeric(product()).negate(), unit);
+                } else {
+                    return q;
+                }
             }
         }
 
@@ -79,8 +85,9 @@ public class Expressions {
             var q = unary();
             while (true) {
                 if (take('*')) q = times(numeric(q), numeric(unary()), false);
-                else if (take('/')) q = times(numeric(q), numeric(unary()), true);
-                else {
+                else if (take('/')) {
+                    q = times(numeric(q), numeric(unary()), true);
+                } else {
                     skip();
                     int begin = index;
                     String word = word();
@@ -89,7 +96,9 @@ public class Expressions {
                             .findFirst();
                     index = begin;
                     if (suffix.isPresent()) q = times(numeric(q), numeric(unary()), false);
-                    else return q;
+                    else {
+                        return q;
+                    }
                 }
             }
         }
@@ -105,8 +114,9 @@ public class Expressions {
                     if (!scalar(exponent)) throw error("Exponent must be unitless");
                     double p = value(exponent, ONE);
                     var base = numeric(q);
-                    if (!scalar(base) && (p != Math.rint(p) || Math.abs(p) > 8))
+                    if (!scalar(base) && (p != Math.rint(p) || Math.abs(p) > 8)) {
                         throw error("Dimensional powers must be integers between -8 and 8");
+                    }
                     Unit<?> target = scalar(base) ? ONE : base.getUnit().pow((int) p);
                     q = normalized(quantity(Math.pow(number(base), p), target));
                 }
@@ -124,7 +134,9 @@ public class Expressions {
                 while (index < input.length()
                         && (asciiLetter(input.charAt(index))
                                 || input.charAt(index) == '_'
-                                || input.charAt(index) == '.')) index++;
+                                || input.charAt(index) == '.')) {
+                    index++;
+                }
             }
             return input.substring(start, index);
         }
@@ -146,7 +158,9 @@ public class Expressions {
                     else if (index < input.length() && input.charAt(index) == '"') {
                         text.append('"');
                         index++;
-                    } else return text.toString();
+                    } else {
+                        return text.toString();
+                    }
                 }
                 throw error("Expected closing quote");
             }
@@ -160,8 +174,10 @@ public class Expressions {
             char first = input.charAt(index);
             if (Character.isDigit(first) || first == '.') {
                 int begin = index++;
-                while (index < input.length() && (Character.isDigit(input.charAt(index)) || input.charAt(index) == '.'))
+                while (index < input.length()
+                        && (Character.isDigit(input.charAt(index)) || input.charAt(index) == '.')) {
                     index++;
+                }
                 if (index < input.length() && (input.charAt(index) == 'e' || input.charAt(index) == 'E')) {
                     index++;
                     if (index < input.length() && (input.charAt(index) == '+' || input.charAt(index) == '-')) index++;
@@ -185,7 +201,11 @@ public class Expressions {
             }
             if (name.equals("pi")) return quantity(Math.PI, ONE);
             if (name.equals("e")) return quantity(Math.E, ONE);
-            for (var u : ParameterUnit.values()) if (u.toString().equals(name)) return normalized(u.quantity(1));
+            for (var u : ParameterUnit.values()) {
+                if (u.toString().equals(name)) {
+                    return normalized(u.quantity(1));
+                }
+            }
             var q = names.apply(name);
             if (q == null) throw error("Unknown parameter '" + name + "'");
             return q instanceof String ? q : normalized(numeric(q));
@@ -193,8 +213,9 @@ public class Expressions {
 
         Quantity<?> function(String name, List<Quantity<?>> args) {
             if (!FUNCTIONS.contains(name)) throw error("Unknown function '" + name + "'");
-            if (args.size() != (name.equals("min") || name.equals("max") ? 2 : 1))
+            if (args.size() != (name.equals("min") || name.equals("max") ? 2 : 1)) {
                 throw error("Wrong argument count for " + name);
+            }
             var q = args.getFirst();
             return switch (name) {
                 case "min", "max" -> {
@@ -215,25 +236,30 @@ public class Expressions {
                             },
                             q.getUnit());
                 case "sqrt" -> {
-                    if (powers(q.getUnit()).values().stream().anyMatch(p -> p % 2 != 0))
+                    if (powers(q.getUnit()).values().stream().anyMatch(p -> p % 2 != 0)) {
                         throw error("Square root requires even unit powers");
+                    }
                     yield normalized(quantity(Math.sqrt(number(q)), q.getUnit().root(2)));
                 }
                 case "sin", "cos", "tan" -> {
                     if (!(scalar(q) || sameKind(q.getUnit(), RADIAN))) throw error("Trigonometry needs an angle");
                     double radians = scalar(q) ? radians(value(q, ONE)) : value(q, RADIAN);
                     yield quantity(
-                            name.equals("sin")
-                                    ? Math.sin(radians)
-                                    : name.equals("cos") ? Math.cos(radians) : Math.tan(radians),
+                            switch (name) {
+                                case "sin" -> Math.sin(radians);
+                                case "cos" -> Math.cos(radians);
+                                default -> Math.tan(radians);
+                            },
                             ONE);
                 }
                 default -> {
                     if (!scalar(q)) throw error("Inverse trigonometry needs a unitless number");
                     yield normalized(quantity(
-                            name.equals("asin")
-                                    ? Math.asin(value(q, ONE))
-                                    : name.equals("acos") ? Math.acos(value(q, ONE)) : Math.atan(value(q, ONE)),
+                            switch (name) {
+                                case "asin" -> Math.asin(value(q, ONE));
+                                case "acos" -> Math.acos(value(q, ONE));
+                                default -> Math.atan(value(q, ONE));
+                            },
                             RADIAN));
                 }
             };

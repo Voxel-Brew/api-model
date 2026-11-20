@@ -28,8 +28,9 @@ public record PlanarProfile(List<List<Segment>> loops) {
                 case CONIC -> 7;
                 case BSPLINE -> values.size();
             };
-            if (values.size() != size || values.stream().anyMatch(v -> !Double.isFinite(v)))
+            if (values.size() != size || values.stream().anyMatch(v -> !Double.isFinite(v))) {
                 throw new IllegalArgumentException("Invalid planar curve parameters for " + kind);
+            }
             if (kind == Kind.BSPLINE) {
                 if (values.size() < 10) throw new IllegalArgumentException("Invalid spline encoding");
                 int degree = values.get(0).intValue(), count = values.get(1).intValue();
@@ -38,18 +39,21 @@ public record PlanarProfile(List<List<Segment>> loops) {
                         || count > 37
                         || values.get(0) != degree
                         || values.get(1) != count
-                        || size != 3 + 3 * count + degree)
+                        || size != 3 + 3 * count + degree) {
                     throw new IllegalArgumentException("Invalid spline degree/poles/knots");
+                }
             }
         }
     }
 
     public PlanarProfile {
         loops = loops.stream().map(List::copyOf).toList();
-        if (loops.isEmpty() || loops.size() > 256 || loops.stream().anyMatch(List::isEmpty))
+        if (loops.isEmpty() || loops.size() > 256 || loops.stream().anyMatch(List::isEmpty)) {
             throw new IllegalArgumentException("A profile needs a nonempty exterior and at most 255 holes");
-        if (loops.stream().mapToInt(List::size).sum() > 4096)
+        }
+        if (loops.stream().mapToInt(List::size).sum() > 4096) {
             throw new IllegalArgumentException("A profile supports up to 4096 evaluated curves");
+        }
     }
 
     /** Returns a fresh array containing the number of segments in each loop. */
