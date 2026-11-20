@@ -14,14 +14,6 @@ public record MeshOptions(double chordToleranceMm, double angularToleranceDegree
         this(value(chordTolerance, MILLIMETRE), value(angularTolerance, DEGREE));
     }
 
-    public Quantity<Length> chordTolerance() {
-        return quantity(chordToleranceMm, MILLIMETRE);
-    }
-
-    public Quantity<Angle> angularTolerance() {
-        return quantity(angularToleranceDegrees, DEGREE);
-    }
-
     public MeshOptions {
         if (!Double.isFinite(chordToleranceMm) || chordToleranceMm < 1e-6) {
             throw new IllegalArgumentException("Chordal tolerance must be finite and >= 0.000001 mm");
@@ -31,5 +23,13 @@ public record MeshOptions(double chordToleranceMm, double angularToleranceDegree
                 || angularToleranceDegrees > 180) {
             throw new IllegalArgumentException("Angular tolerance must be in (0, 180] degrees");
         }
+    }
+
+    public Quantity<Length> chordTolerance() {
+        return quantity(chordToleranceMm, MILLIMETRE);
+    }
+
+    public Quantity<Angle> angularTolerance() {
+        return quantity(angularToleranceDegrees, DEGREE);
     }
 }

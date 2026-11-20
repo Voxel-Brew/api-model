@@ -29,6 +29,11 @@ public record ProcessSettings(
             quantity(0, MILLIMETRE),
             0);
 
+    private static void range(String field, double value, double min, double max) {
+        if (!Double.isFinite(value) || value < min || value > max)
+            throw new IllegalArgumentException(field + " must be between " + min + " and " + max);
+    }
+
     public ProcessSettings(
             Quantity<Length> layerHeight,
             int walls,
@@ -51,6 +56,17 @@ public record ProcessSettings(
                 interfaceLayers,
                 value(brimWidth, MILLIMETRE),
                 raftLayers);
+    }
+
+    public ProcessSettings {
+        range("layer height", layerHeight, 0.05, 0.3);
+        range("perimeter walls", walls, 1, 20);
+        range("infill percent", infillPercent, 0, 100);
+        range("support threshold (degrees from horizontal)", supportThreshold, 0, 90);
+        range("support contact gap", supportContactGap, 0, 2);
+        range("interface layers", interfaceLayers, 0, 20);
+        range("brim width", brimWidth, 0, 50);
+        range("raft layers", raftLayers, 0, 20);
     }
 
     public ProcessSettings withoutSupports() {
@@ -85,21 +101,5 @@ public record ProcessSettings(
 
     public Quantity<Length> brimWidthQuantity() {
         return quantity(brimWidth, MILLIMETRE);
-    }
-
-    public ProcessSettings {
-        range("layer height", layerHeight, 0.05, 0.3);
-        range("perimeter walls", walls, 1, 20);
-        range("infill percent", infillPercent, 0, 100);
-        range("support threshold (degrees from horizontal)", supportThreshold, 0, 90);
-        range("support contact gap", supportContactGap, 0, 2);
-        range("interface layers", interfaceLayers, 0, 20);
-        range("brim width", brimWidth, 0, 50);
-        range("raft layers", raftLayers, 0, 20);
-    }
-
-    private static void range(String field, double value, double min, double max) {
-        if (!Double.isFinite(value) || value < min || value > max)
-            throw new IllegalArgumentException(field + " must be between " + min + " and " + max);
     }
 }

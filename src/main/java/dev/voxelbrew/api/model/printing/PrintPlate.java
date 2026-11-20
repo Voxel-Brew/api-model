@@ -12,12 +12,6 @@ public record PrintPlate(String id, @NonNull String name, List<BodyInstance> ins
         this(id, "", instances, supports);
     }
 
-    public PrintPlate withName(@NonNull String value) {
-        String normalized = value.strip();
-        CadDocument.requireBodyName(normalized);
-        return new PrintPlate(id, normalized, instances, supports);
-    }
-
     public PrintPlate {
         CadDocument.identifier(id, "plate ID");
         if (!name.isEmpty()) CadDocument.requireBodyName(name);
@@ -32,5 +26,11 @@ public record PrintPlate(String id, @NonNull String name, List<BodyInstance> ins
         ids.clear();
         for (var support : supports)
             if (!ids.add(support.id())) throw new IllegalArgumentException("Duplicate support " + support.id());
+    }
+
+    public PrintPlate withName(@NonNull String value) {
+        String normalized = value.strip();
+        CadDocument.requireBodyName(normalized);
+        return new PrintPlate(id, normalized, instances, supports);
     }
 }

@@ -12,39 +12,6 @@ public record SketchGeometry(List<Entity> entities, List<Constraint> constraints
     public static final double TOLERANCE = 1e-6;
     public static final Ref ORIGIN = new Ref("origin", Part.POINT);
 
-    public SketchGeometry {
-        entities = List.copyOf(entities);
-        constraints = List.copyOf(constraints);
-        boundary = List.copyOf(boundary);
-        if (entities.size() > 64 || constraints.size() > 256)
-            throw new IllegalArgumentException("A sketch supports up to 64 entities and 256 constraints");
-        var ids = new HashSet<String>();
-        for (var e : entities)
-            if (e.id().equals("origin") || !ids.add(e.id()))
-                throw new IllegalArgumentException("Duplicate or reserved sketch entity ID: " + e.id());
-        ids.clear();
-        for (var c : constraints)
-            if (!ids.add(c.id())) throw new IllegalArgumentException("Duplicate constraint ID: " + c.id());
-        if (new HashSet<>(boundary).size() != boundary.size())
-            throw new IllegalArgumentException("Duplicate profile boundary entity");
-    }
-
-    public static Entity entity(String id, Kind kind, boolean construction, double... values) {
-        return new Entity(id, kind, java.util.Arrays.stream(values).boxed().toList(), construction);
-    }
-
-    public static SketchGeometry empty() {
-        return new SketchGeometry(List.of(), List.of(), List.of());
-    }
-
-    static String derivedId(String id, String suffix) {
-        String result = id + suffix;
-        if (result.length() <= 128) return result;
-        return id.substring(0, Math.min(80, id.length()))
-                + "-"
-                + java.util.UUID.nameUUIDFromBytes(result.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-    }
-
     public enum Kind {
         POINT("Point", "x", "y"),
         LINE("Line", "startX", "startY", "endX", "endY"),
@@ -281,27 +248,6 @@ public record SketchGeometry(List<Entity> entities, List<Constraint> constraints
     }
 
     public record Ref(String entityId, @NonNull Part part, int index) {
-        public Ref(String entityId, Part part) {
-            this(entityId, part, 0);
-        }
-
-        public Ref {
-            CadDocument.identifier(entityId, "sketch reference ID");
-
-            if (index < 0 || index > 31 || (part != Part.CONTROL && part != Part.FIT && index != 0))
-                throw new IllegalArgumentException("Invalid reference index");
-        }
-
-        @Override
-        public String toString() {
-            return entityId
-                    + (part == Part.OBJECT
-                            ? ""
-                            : "."
-                                    + part.name().toLowerCase(java.util.Locale.ROOT)
-                                    + (part == Part.CONTROL || part == Part.FIT ? "[" + index + "]" : ""));
-        }
-
         public static Ref parse(String value) {
             int dot = value.lastIndexOf('.');
             if (dot > 0) {
@@ -321,6 +267,27 @@ public record SketchGeometry(List<Entity> entities, List<Constraint> constraints
                 }
             }
             return new Ref(value, Part.OBJECT);
+        }
+
+        public Ref(String entityId, Part part) {
+            this(entityId, part, 0);
+        }
+
+        public Ref {
+            CadDocument.identifier(entityId, "sketch reference ID");
+
+            if (index < 0 || index > 31 || (part != Part.CONTROL && part != Part.FIT && index != 0))
+                throw new IllegalArgumentException("Invalid reference index");
+        }
+
+        @Override
+        public String toString() {
+            return entityId
+                    + (part == Part.OBJECT
+                            ? ""
+                            : "."
+                                    + part.name().toLowerCase(java.util.Locale.ROOT)
+                                    + (part == Part.CONTROL || part == Part.FIT ? "[" + index + "]" : ""));
         }
     }
 
@@ -421,6 +388,39 @@ public record SketchGeometry(List<Entity> entities, List<Constraint> constraints
         public Vec normal() {
             return new Vec(-y, x);
         }
+    }
+
+    public static Entity entity(String id, Kind kind, boolean construction, double... values) {
+        return new Entity(id, kind, java.util.Arrays.stream(values).boxed().toList(), construction);
+    }
+
+    public static SketchGeometry empty() {
+        return new SketchGeometry(List.of(), List.of(), List.of());
+    }
+
+    static String derivedId(String id, String suffix) {
+        String result = id + suffix;
+        if (result.length() <= 128) return result;
+        return id.substring(0, Math.min(80, id.length()))
+                + "-"
+                + java.util.UUID.nameUUIDFromBytes(result.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    }
+
+    public SketchGeometry {
+        entities = List.copyOf(entities);
+        constraints = List.copyOf(constraints);
+        boundary = List.copyOf(boundary);
+        if (entities.size() > 64 || constraints.size() > 256)
+            throw new IllegalArgumentException("A sketch supports up to 64 entities and 256 constraints");
+        var ids = new HashSet<String>();
+        for (var e : entities)
+            if (e.id().equals("origin") || !ids.add(e.id()))
+                throw new IllegalArgumentException("Duplicate or reserved sketch entity ID: " + e.id());
+        ids.clear();
+        for (var c : constraints)
+            if (!ids.add(c.id())) throw new IllegalArgumentException("Duplicate constraint ID: " + c.id());
+        if (new HashSet<>(boundary).size() != boundary.size())
+            throw new IllegalArgumentException("Duplicate profile boundary entity");
     }
 
     public Entity entity(String id) {

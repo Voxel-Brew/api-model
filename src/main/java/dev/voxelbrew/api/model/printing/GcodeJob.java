@@ -10,15 +10,6 @@ public record GcodeJob(
         Optional<String> estimatedTime,
         Map<String, String> report,
         List<String> lines) {
-    public GcodeJob(
-            List<Segment> segments,
-            List<Double> modelLayers,
-            OptionalDouble filamentMm,
-            Optional<String> estimatedTime,
-            Map<String, String> report) {
-        this(segments, modelLayers, filamentMm, estimatedTime, report, List.of());
-    }
-
     public enum Role {
         PERIMETER,
         EXTERNAL_PERIMETER,
@@ -67,6 +58,15 @@ public record GcodeJob(
         public boolean deposits() {
             return extrusion > 1e-8 && role != Role.TRAVEL && length() > 1e-8;
         }
+    }
+
+    public GcodeJob(
+            List<Segment> segments,
+            List<Double> modelLayers,
+            OptionalDouble filamentMm,
+            Optional<String> estimatedTime,
+            Map<String, String> report) {
+        this(segments, modelLayers, filamentMm, estimatedTime, report, List.of());
     }
 
     public GcodeJob {

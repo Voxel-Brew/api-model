@@ -12,6 +12,18 @@ public record HardwareSettings(
         int toolCount,
         boolean genericGcode,
         boolean modified) {
+    private static void validatePolygon(List<PrintProfile.Point> points) {
+        double area = 0;
+        for (int i = 0; i < points.size(); i++) {
+            var a = points.get(i);
+            var b = points.get((i + 1) % points.size());
+            if (Math.abs(a.x()) > 10000 || Math.abs(a.y()) > 10000)
+                throw new IllegalArgumentException("Bed coordinate exceeds supported limits");
+            area += a.x() * b.y() - b.x() * a.y();
+        }
+        if (Math.abs(area) < 1e-6) throw new IllegalArgumentException("Degenerate bed polygon");
+    }
+
     public HardwareSettings {
         CadDocument.identifier(printer.id(), "printer ID");
         if (printer.name().isBlank()
@@ -32,18 +44,6 @@ public record HardwareSettings(
                         || !printer.firmware().equals("marlin2")
                         || !printer.outputFormat().equals("gcode")))
             throw new IllegalArgumentException("Generic G-code requires one Marlin 2 tool and text G-code");
-    }
-
-    private static void validatePolygon(List<PrintProfile.Point> points) {
-        double area = 0;
-        for (int i = 0; i < points.size(); i++) {
-            var a = points.get(i);
-            var b = points.get((i + 1) % points.size());
-            if (Math.abs(a.x()) > 10000 || Math.abs(a.y()) > 10000)
-                throw new IllegalArgumentException("Bed coordinate exceeds supported limits");
-            area += a.x() * b.y() - b.x() * a.y();
-        }
-        if (Math.abs(area) < 1e-6) throw new IllegalArgumentException("Degenerate bed polygon");
     }
 
     public HardwareSettings rectangular(double width, double depth, double height) {

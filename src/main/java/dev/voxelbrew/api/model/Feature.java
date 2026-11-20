@@ -16,8 +16,6 @@ public sealed interface Feature
                 Feature.Shell,
                 Feature.Custom,
                 ConstructionFeature {
-    String id();
-
     /** Local sketch XY frame, with an additional signed offset along its normal in mm. */
     record Plane(
             String id,
@@ -25,6 +23,15 @@ public sealed interface Feature
             @NonNull Transform frame,
             FaceSupport support,
             @NonNull String constructionSupport) {
+        public static Plane origin(String name) {
+            return switch (name) {
+                case "XY" -> new Plane("origin-xy", 0);
+                case "XZ" -> new Plane("origin-xz", 0, new Transform(1, 0, 0, 0, 0, 0, -1, 0, 0, 1, 0, 0), null);
+                case "YZ" -> new Plane("origin-yz", 0, new Transform(0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0), null);
+                default -> throw new IllegalArgumentException("Unknown origin plane: " + name);
+            };
+        }
+
         public Plane {
 
             if (!constructionSupport.isEmpty()) {
@@ -56,15 +63,6 @@ public sealed interface Feature
 
         public boolean isOrigin() {
             return java.util.Set.of("origin-xy", "origin-xz", "origin-yz").contains(id);
-        }
-
-        public static Plane origin(String name) {
-            return switch (name) {
-                case "XY" -> new Plane("origin-xy", 0);
-                case "XZ" -> new Plane("origin-xz", 0, new Transform(1, 0, 0, 0, 0, 0, -1, 0, 0, 1, 0, 0), null);
-                case "YZ" -> new Plane("origin-yz", 0, new Transform(0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0), null);
-                default -> throw new IllegalArgumentException("Unknown origin plane: " + name);
-            };
         }
     }
 
@@ -172,4 +170,6 @@ public sealed interface Feature
                     + "]";
         }
     }
+
+    String id();
 }

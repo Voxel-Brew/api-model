@@ -27,6 +27,10 @@ public record ConstructionFeature(
             @NonNull String output,
             int index,
             @NonNull Vector position) {
+        public static Input originPlane(int index) {
+            return new Input(Selection.ORIGIN_PLANE, "", "", index, new Vector(0, 0, 0));
+        }
+
         public Input {
 
             if (index < 0) throw new IllegalArgumentException("Negative construction reference index");
@@ -38,10 +42,6 @@ public record ConstructionFeature(
                     || selection == Selection.FACE
                     || selection == Selection.EDGE
                     || selection == Selection.VERTEX) CadDocument.identifier(source, "construction input");
-        }
-
-        public static Input originPlane(int index) {
-            return new Input(Selection.ORIGIN_PLANE, "", "", index, new Vector(0, 0, 0));
         }
     }
 

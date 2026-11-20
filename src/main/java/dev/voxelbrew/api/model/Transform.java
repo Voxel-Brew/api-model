@@ -7,6 +7,20 @@ public final class Transform {
     public static final Transform IDENTITY = new Transform(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0);
     private final double[] m;
 
+    public static Transform translation(double x, double y, double z) {
+        return new Transform(1, 0, 0, x, 0, 1, 0, y, 0, 0, 1, z);
+    }
+
+    public static Transform rotation(double xDegrees, double yDegrees, double zDegrees) {
+        double x = dev.voxelbrew.api.model.units.Measurements.radians(xDegrees),
+                y = dev.voxelbrew.api.model.units.Measurements.radians(yDegrees),
+                z = dev.voxelbrew.api.model.units.Measurements.radians(zDegrees);
+        var rx = new Transform(1, 0, 0, 0, 0, Math.cos(x), -Math.sin(x), 0, 0, Math.sin(x), Math.cos(x), 0);
+        var ry = new Transform(Math.cos(y), 0, Math.sin(y), 0, 0, 1, 0, 0, -Math.sin(y), 0, Math.cos(y), 0);
+        var rz = new Transform(Math.cos(z), -Math.sin(z), 0, 0, Math.sin(z), Math.cos(z), 0, 0, 0, 0, 1, 0);
+        return rz.compose(ry).compose(rx);
+    }
+
     public Transform(double... matrix) {
         if (matrix.length != 12) throw new IllegalArgumentException("Placement requires 12 values");
         m = matrix.clone();
@@ -22,10 +36,6 @@ public final class Transform {
                 - m[1] * (m[4] * m[10] - m[6] * m[8])
                 + m[2] * (m[4] * m[9] - m[5] * m[8]);
         if (det < 0) throw new IllegalArgumentException("Placement must preserve orientation");
-    }
-
-    public static Transform translation(double x, double y, double z) {
-        return new Transform(1, 0, 0, x, 0, 1, 0, y, 0, 0, 1, z);
     }
 
     public double[] matrix() {
@@ -51,16 +61,6 @@ public final class Transform {
             for (int k = 0; k < 3; k++) out[4 * r + 3] += m[4 * r + k] * b[4 * k + 3];
         }
         return new Transform(out);
-    }
-
-    public static Transform rotation(double xDegrees, double yDegrees, double zDegrees) {
-        double x = dev.voxelbrew.api.model.units.Measurements.radians(xDegrees),
-                y = dev.voxelbrew.api.model.units.Measurements.radians(yDegrees),
-                z = dev.voxelbrew.api.model.units.Measurements.radians(zDegrees);
-        var rx = new Transform(1, 0, 0, 0, 0, Math.cos(x), -Math.sin(x), 0, 0, Math.sin(x), Math.cos(x), 0);
-        var ry = new Transform(Math.cos(y), 0, Math.sin(y), 0, 0, 1, 0, 0, -Math.sin(y), 0, Math.cos(y), 0);
-        var rz = new Transform(Math.cos(z), -Math.sin(z), 0, 0, Math.sin(z), Math.cos(z), 0, 0, 0, 0, 1, 0);
-        return rz.compose(ry).compose(rx);
     }
 
     @Override
