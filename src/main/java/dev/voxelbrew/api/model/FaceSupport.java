@@ -10,19 +10,6 @@ import lombok.NonNull;
  * planes are ordered by signed distance. Changed group counts require explicit repair.
  */
 public record FaceSupport(@NonNull Feature.BodyRef body, double nx, double ny, double nz, int rank, int count) {
-    public FaceSupport {
-
-        CadDocument.identifier(body.featureId(), "support feature ID");
-        CadDocument.identifier(body.outputName(), "support output");
-        if (!Double.isFinite(nx)
-                || !Double.isFinite(ny)
-                || !Double.isFinite(nz)
-                || Math.abs(Math.hypot(Math.hypot(nx, ny), nz) - 1) > 1e-9
-                || count < 1
-                || rank < 0
-                || rank >= count) throw new IllegalArgumentException("Invalid supporting plane reference");
-    }
-
     public static Feature.Plane attach(Feature.BodyRef body, List<PlanarFace> faces, int faceIndex) {
         return attach(body, faces, faceIndex, new dev.voxelbrew.api.model.UuidGenerator());
     }
@@ -45,6 +32,19 @@ public record FaceSupport(@NonNull Feature.BodyRef body, double nx, double ny, d
                 0,
                 face.frame(),
                 new FaceSupport(body, face.nx(), face.ny(), face.nz(), rank, planes.size()));
+    }
+
+    public FaceSupport {
+
+        CadDocument.identifier(body.featureId(), "support feature ID");
+        CadDocument.identifier(body.outputName(), "support output");
+        if (!Double.isFinite(nx)
+                || !Double.isFinite(ny)
+                || !Double.isFinite(nz)
+                || Math.abs(Math.hypot(Math.hypot(nx, ny), nz) - 1) > 1e-9
+                || count < 1
+                || rank < 0
+                || rank >= count) throw new IllegalArgumentException("Invalid supporting plane reference");
     }
 
     public Transform resolve(List<PlanarFace> faces, Transform previous) {

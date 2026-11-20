@@ -9,8 +9,6 @@ import java.awt.geom.Path2D;
 import java.util.List;
 
 public final class MeshGeometry {
-    private MeshGeometry() {}
-
     public static MeshData transform(MeshData mesh, Transform placement) {
         double[] vertices = mesh.vertices();
         for (int i = 0; i < vertices.length; i += 3) {
@@ -123,4 +121,6 @@ public final class MeshGeometry {
         }
         return new Area(path);
     }
+
+    private MeshGeometry() {}
 }

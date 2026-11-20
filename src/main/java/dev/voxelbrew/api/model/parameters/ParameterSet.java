@@ -13,21 +13,6 @@ public record ParameterSet(
         List<Binding> bindings,
         @NonNull dev.voxelbrew.api.model.UuidGenerator uuidGenerator,
         BuiltinParameters builtins) {
-    public ParameterSet(
-            List<Parameter> parameters,
-            List<Configuration> configurations,
-            String active,
-            List<Binding> bindings,
-            dev.voxelbrew.api.model.UuidGenerator uuidGenerator) {
-        this(parameters, configurations, active, bindings, uuidGenerator, new BuiltinParameters());
-    }
-
-    public List<Parameter> allParameters() {
-        var all = new ArrayList<>(parameters);
-        all.addAll(builtins.parameters());
-        return List.copyOf(all);
-    }
-
     public record Parameter(String id, String name, @NonNull ParameterUnit unit, String expression, String comment) {
         public Parameter {
             CadDocument.identifier(id, "parameter ID");
@@ -80,27 +65,36 @@ public record ParameterSet(
         }
     }
 
+    public static ParameterSet empty() {
+        return new ParameterSet(List.of(), List.of(), "", List.of());
+    }
+
+    public static void requireName(String name) {
+        if (name == null
+                || !name.matches("[A-Za-z][A-Za-z_.]{0,63}")
+                || name.startsWith("vb.")
+                || Expressions.reserved(name))
+            throw new IllegalArgumentException(
+                    "Parameter name must start with an ASCII letter, contain at most 64 ASCII letters/underscores/dots, and not start with vb. (reserved for built-in parameters) or be a unit or function");
+    }
+
+    private static void requireExpression(String expression) {
+        if (expression == null || expression.isBlank() || expression.length() > 512)
+            throw new IllegalArgumentException("Expression must contain 1–512 characters");
+    }
+
+    public ParameterSet(
+            List<Parameter> parameters,
+            List<Configuration> configurations,
+            String active,
+            List<Binding> bindings,
+            dev.voxelbrew.api.model.UuidGenerator uuidGenerator) {
+        this(parameters, configurations, active, bindings, uuidGenerator, new BuiltinParameters());
+    }
+
     public ParameterSet(
             List<Parameter> parameters, List<Configuration> configurations, String active, List<Binding> bindings) {
         this(parameters, configurations, active, bindings, new dev.voxelbrew.api.model.UuidGenerator());
-    }
-
-    public ParameterSet withUuidGenerator(dev.voxelbrew.api.model.UuidGenerator generator) {
-        return new ParameterSet(parameters, configurations, active, bindings, generator, builtins);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return other instanceof ParameterSet p
-                && parameters.equals(p.parameters)
-                && configurations.equals(p.configurations)
-                && active.equals(p.active)
-                && bindings.equals(p.bindings);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(parameters, configurations, active, bindings);
     }
 
     public ParameterSet {
@@ -131,22 +125,28 @@ public record ParameterSet(
             if (!targets.add(b.target())) throw new IllegalArgumentException("Duplicate binding: " + b.target());
     }
 
-    public static ParameterSet empty() {
-        return new ParameterSet(List.of(), List.of(), "", List.of());
+    public List<Parameter> allParameters() {
+        var all = new ArrayList<>(parameters);
+        all.addAll(builtins.parameters());
+        return List.copyOf(all);
     }
 
-    public static void requireName(String name) {
-        if (name == null
-                || !name.matches("[A-Za-z][A-Za-z_.]{0,63}")
-                || name.startsWith("vb.")
-                || Expressions.reserved(name))
-            throw new IllegalArgumentException(
-                    "Parameter name must start with an ASCII letter, contain at most 64 ASCII letters/underscores/dots, and not start with vb. (reserved for built-in parameters) or be a unit or function");
+    public ParameterSet withUuidGenerator(dev.voxelbrew.api.model.UuidGenerator generator) {
+        return new ParameterSet(parameters, configurations, active, bindings, generator, builtins);
     }
 
-    private static void requireExpression(String expression) {
-        if (expression == null || expression.isBlank() || expression.length() > 512)
-            throw new IllegalArgumentException("Expression must contain 1–512 characters");
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof ParameterSet p
+                && parameters.equals(p.parameters)
+                && configurations.equals(p.configurations)
+                && active.equals(p.active)
+                && bindings.equals(p.bindings);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(parameters, configurations, active, bindings);
     }
 
     public Parameter parameter(String nameOrId) {

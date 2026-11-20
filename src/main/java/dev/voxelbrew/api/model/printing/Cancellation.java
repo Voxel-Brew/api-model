@@ -4,14 +4,15 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class Cancellation {
+    private final AtomicBoolean cancelled = new AtomicBoolean();
+
+    private final java.util.List<Runnable> listeners = new java.util.ArrayList<>();
+    private boolean published;
+
     @FunctionalInterface
     public interface Publication {
         void run() throws java.io.IOException;
     }
-
-    private final AtomicBoolean cancelled = new AtomicBoolean();
-    private boolean published;
-    private final java.util.List<Runnable> listeners = new java.util.ArrayList<>();
 
     public synchronized boolean cancel() {
         if (published) return false;

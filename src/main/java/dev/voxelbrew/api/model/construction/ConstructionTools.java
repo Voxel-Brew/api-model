@@ -6,8 +6,6 @@ import static dev.voxelbrew.api.model.construction.ConstructionGeometry.*;
 public final class ConstructionTools {
     private static final double TOLERANCE = 1e-7;
 
-    private ConstructionTools() {}
-
     public enum Tool {
         COORDINATE_SYSTEM,
         OFFSET_PLANE,
@@ -205,4 +203,6 @@ public final class ConstructionTools {
     private static void finite(double value) {
         if (!Double.isFinite(value)) throw new IllegalArgumentException("Construction parameter must be finite");
     }
+
+    private ConstructionTools() {}
 }

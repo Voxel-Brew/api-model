@@ -22,6 +22,12 @@ public enum ParameterUnit {
     private final String symbol;
     private final Unit<?> unit;
 
+    public static ParameterUnit parse(String text) {
+        for (var unit : values())
+            if (unit.symbol.equalsIgnoreCase(text) || unit.name().equalsIgnoreCase(text)) return unit;
+        throw new IllegalArgumentException("Unknown unit: " + text);
+    }
+
     public Unit<?> unit() {
         return unit;
     }
@@ -45,11 +51,5 @@ public enum ParameterUnit {
     @Override
     public String toString() {
         return symbol;
-    }
-
-    public static ParameterUnit parse(String text) {
-        for (var unit : values())
-            if (unit.symbol.equalsIgnoreCase(text) || unit.name().equalsIgnoreCase(text)) return unit;
-        throw new IllegalArgumentException("Unknown unit: " + text);
     }
 }

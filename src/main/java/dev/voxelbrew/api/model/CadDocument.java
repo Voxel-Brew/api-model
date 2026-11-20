@@ -17,6 +17,31 @@ public record CadDocument(
         Map<String, String> featureNames,
         Map<String, List<String>> gcode,
         Map<String, dev.voxelbrew.api.model.printing.PrintArtifact> printArtifacts) {
+    public static CadDocument empty() {
+        var ids = new dev.voxelbrew.api.model.UuidGenerator();
+        return new CadDocument(
+                Long.toString(ids.next()),
+                List.of(),
+                0,
+                dev.voxelbrew.api.model.printing.PrintSetup.empty(),
+                dev.voxelbrew.api.model.parameters.ParameterSet.empty().withUuidGenerator(ids));
+    }
+
+    public static void requireBodyName(String name) {
+        if (name == null
+                || name.isBlank()
+                || name.length() > 128
+                || name.codePoints().anyMatch(Character::isISOControl))
+            throw new IllegalArgumentException("Body name must contain 1–128 characters and no control characters");
+    }
+
+    public static void identifier(String id, String field) {
+        if (id == null || !id.matches("[A-Za-z0-9][A-Za-z0-9_.-]{0,127}")) {
+            throw new IllegalArgumentException(
+                    field + " must contain 1–128 letters, digits, dots, underscores or hyphens");
+        }
+    }
+
     public CadDocument(
             String id,
             List<Feature> features,
@@ -30,11 +55,6 @@ public record CadDocument(
         this(id, features, cursor, printSetup, parameters, bodyStyles, bodyNames, featureNames, gcode, Map.of());
     }
 
-    public CadDocument withPrintArtifacts(Map<String, dev.voxelbrew.api.model.printing.PrintArtifact> artifacts) {
-        return new CadDocument(
-                id, features, cursor, printSetup, parameters, bodyStyles, bodyNames, featureNames, gcode, artifacts);
-    }
-
     public CadDocument(
             String id,
             List<Feature> features,
@@ -45,15 +65,6 @@ public record CadDocument(
             Map<String, String> bodyNames,
             Map<String, String> featureNames) {
         this(id, features, cursor, printSetup, parameters, bodyStyles, bodyNames, featureNames, Map.of());
-    }
-
-    /** Complete UTF-8 jobs keyed by plate, with one element per source line. */
-    public CadDocument withGcode(Map<String, List<String>> jobs) {
-        return new CadDocument(id, features, cursor, printSetup, parameters, bodyStyles, bodyNames, featureNames, jobs);
-    }
-
-    public List<String> activeGcode() {
-        return gcode.getOrDefault(printSetup.activePlateId(), List.of());
     }
 
     public CadDocument(
@@ -130,18 +141,22 @@ public record CadDocument(
         }
     }
 
-    public dev.voxelbrew.api.model.UuidGenerator uuidGenerator() {
-        return parameters.uuidGenerator();
+    public CadDocument withPrintArtifacts(Map<String, dev.voxelbrew.api.model.printing.PrintArtifact> artifacts) {
+        return new CadDocument(
+                id, features, cursor, printSetup, parameters, bodyStyles, bodyNames, featureNames, gcode, artifacts);
     }
 
-    public static CadDocument empty() {
-        var ids = new dev.voxelbrew.api.model.UuidGenerator();
-        return new CadDocument(
-                Long.toString(ids.next()),
-                List.of(),
-                0,
-                dev.voxelbrew.api.model.printing.PrintSetup.empty(),
-                dev.voxelbrew.api.model.parameters.ParameterSet.empty().withUuidGenerator(ids));
+    /** Complete UTF-8 jobs keyed by plate, with one element per source line. */
+    public CadDocument withGcode(Map<String, List<String>> jobs) {
+        return new CadDocument(id, features, cursor, printSetup, parameters, bodyStyles, bodyNames, featureNames, jobs);
+    }
+
+    public List<String> activeGcode() {
+        return gcode.getOrDefault(printSetup.activePlateId(), List.of());
+    }
+
+    public dev.voxelbrew.api.model.UuidGenerator uuidGenerator() {
+        return parameters.uuidGenerator();
     }
 
     /** Display names never replace stable body identities or feature references. */
@@ -151,14 +166,6 @@ public record CadDocument(
 
     public String featureName(String featureId, String fallback) {
         return featureNames.getOrDefault(featureId, fallback);
-    }
-
-    public static void requireBodyName(String name) {
-        if (name == null
-                || name.isBlank()
-                || name.length() > 128
-                || name.codePoints().anyMatch(Character::isISOControl))
-            throw new IllegalArgumentException("Body name must contain 1–128 characters and no control characters");
     }
 
     /**
@@ -191,12 +198,5 @@ public record CadDocument(
             }
         }
         return bodyStyle(output.featureId() + "." + output.outputName(), visited);
-    }
-
-    public static void identifier(String id, String field) {
-        if (id == null || !id.matches("[A-Za-z0-9][A-Za-z0-9_.-]{0,127}")) {
-            throw new IllegalArgumentException(
-                    field + " must contain 1–128 letters, digits, dots, underscores or hyphens");
-        }
     }
 }

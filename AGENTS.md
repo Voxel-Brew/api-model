@@ -19,6 +19,11 @@ Use the committed wrapper (`gradlew.bat` on Windows); do not depend on a system 
 
 Spotless enforces Palantir Java Format and ktfmt; run it instead of hand-aligning code. Java compilation enables all lint warnings and treats warnings as errors. Use four-space Java indentation, `UpperCamelCase` types, `lowerCamelCase` members, and package names beneath `dev.voxelbrew.api.model`. Keep public API values immutable where practical, following the existing records and defensive collection copies. Add concise Javadoc when a public contract or invariant is not self-evident.
 
+Run `./gradlew checkJavaMemberOrder` to check Java source declaration order. The `check` and
+`build` tasks include it. Within each class, start with static final fields, then other static fields,
+final instance fields, other instance fields, static nested types, inner classes, static methods,
+constructors, and instance methods. Preserve Java initialization order when moving fields.
+
 ## Testing Guidelines
 
 Tests use JUnit 5. Name test classes `*Test` and methods as behavior statements, such as `documentIdentifiersRemainMonotonicAndRejectOverflow`. Cover valid behavior and boundary/error cases. No numeric coverage threshold is configured; every public contract change should include focused regression tests.

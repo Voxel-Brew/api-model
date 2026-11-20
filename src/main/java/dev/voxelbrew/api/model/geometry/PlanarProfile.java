@@ -5,14 +5,6 @@ import lombok.NonNull;
 
 /** Ordered exact XY curves: counterclockwise exterior followed by clockwise holes. */
 public record PlanarProfile(List<List<Segment>> loops) {
-    public PlanarProfile {
-        loops = loops.stream().map(List::copyOf).toList();
-        if (loops.isEmpty() || loops.size() > 256 || loops.stream().anyMatch(List::isEmpty))
-            throw new IllegalArgumentException("A profile needs a nonempty exterior and at most 255 holes");
-        if (loops.stream().mapToInt(List::size).sum() > 4096)
-            throw new IllegalArgumentException("A profile supports up to 4096 evaluated curves");
-    }
-
     public enum Kind {
         LINE,
         CIRCLE,
@@ -50,6 +42,14 @@ public record PlanarProfile(List<List<Segment>> loops) {
                     throw new IllegalArgumentException("Invalid spline degree/poles/knots");
             }
         }
+    }
+
+    public PlanarProfile {
+        loops = loops.stream().map(List::copyOf).toList();
+        if (loops.isEmpty() || loops.size() > 256 || loops.stream().anyMatch(List::isEmpty))
+            throw new IllegalArgumentException("A profile needs a nonempty exterior and at most 255 holes");
+        if (loops.stream().mapToInt(List::size).sum() > 4096)
+            throw new IllegalArgumentException("A profile supports up to 4096 evaluated curves");
     }
 
     /** Returns a fresh array containing the number of segments in each loop. */

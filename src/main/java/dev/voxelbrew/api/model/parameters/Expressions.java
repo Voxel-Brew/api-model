@@ -18,101 +18,15 @@ public class Expressions {
             Set.of("abs", "sqrt", "min", "max", "sin", "cos", "tan", "asin", "acos", "atan", "floor", "ceil", "round");
     private static final Pattern TOKEN = Pattern.compile("\"(?:[^\"]|\"\")*\"|(?<![A-Za-z_0-9.])[A-Za-z][A-Za-z_.]*");
 
-    public static boolean isFormula(String text) {
-        return text != null && text.stripLeading().startsWith("=");
-    }
-
-    /** Preserve a stored literal when displaying it in an expression-enabled text editor. */
-    public static String literalText(String text) {
-        return isFormula(text) ? "=\"" + text.replace("\"", "\"\"") + "\"" : text;
-    }
-
-    public static boolean isNumber(String text) {
-        return text != null && text.strip().matches("[+-]?(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?");
-    }
-
-    private static Quantity<?> numeric(Object value) {
-        if (value instanceof Quantity<?> quantity) return quantity;
-        throw new IllegalArgumentException("Expected a number, but the expression produced text");
-    }
-
-    /** Stable, locale-independent display; dimensional results use model units (mm/degrees). */
-    public static String format(Object value) {
-        if (value instanceof String text) return text;
-        double number = number(numeric(value));
-        if (!Double.isFinite(number)) throw new IllegalArgumentException("Expression must be finite");
-        return BigDecimal.valueOf(number).stripTrailingZeros().toPlainString();
-    }
-
-    /** Text is literal unless it starts with '='. Use doubled quotes inside string literals. */
-    public static String evaluateText(@NonNull String text, Function<String, ?> names) {
-
-        return isFormula(text) ? format(evaluateAny(text, names)) : text;
-    }
-
-    public static Object evaluateAny(String expression, Function<String, ?> names) {
-        return new Parser(expression, names, ParameterUnit.MM).parse();
-    }
-
-    private static boolean scalar(Quantity<?> q) {
-        return sameKind(q.getUnit(), ONE);
-    }
-
-    private static double number(Quantity<?> q) {
-        return q.getValue().doubleValue();
-    }
-
-    private static Quantity<?> implicit(Quantity<?> q, Quantity<?> dimensional, ParameterUnit unit) {
-        Unit<?> target = sameKind(unit.unit(), dimensional.getUnit()) ? unit.unit() : canonical(dimensional.getUnit());
-        return normalized(quantity(value(q, ONE), target));
-    }
-
-    private static <Q extends Quantity<Q>> Quantity<Q> sum(Quantity<Q> a, Quantity<?> b) {
-        return a.add(to(b, a.getUnit()));
-    }
-
-    private static Quantity<?> add(Quantity<?> a, Quantity<?> b, ParameterUnit unit) {
-        if (scalar(a) && !scalar(b)) a = implicit(a, b, unit);
-        if (scalar(b) && !scalar(a)) b = implicit(b, a, unit);
-        return normalized(sum(a, b));
-    }
-
-    private static Quantity<?> times(Quantity<?> a, Quantity<?> b, boolean divide) {
-        if (divide && number(b) == 0) throw new IllegalArgumentException("Division by zero");
-        return normalized(divide ? a.divide(b) : a.multiply(b));
-    }
-
-    public static boolean reserved(String name) {
-        return FUNCTIONS.contains(name)
-                || name.equals("pi")
-                || name.equals("e")
-                || name.equals("NaN")
-                || name.equals("Infinity")
-                || Arrays.stream(ParameterUnit.values())
-                        .anyMatch(u -> u.toString().equals(name));
-    }
-
-    public static String rename(String expression, String oldName, String newName) {
-        return TOKEN.matcher(expression)
-                .replaceAll(
-                        m -> java.util.regex.Matcher.quoteReplacement(m.group().equals(oldName) ? newName : m.group()));
-    }
-
-    public static Quantity<?> evaluate(String expression, ParameterUnit unit, Function<String, ?> names) {
-        var value = numeric(new Parser(expression, names, unit).parse());
-        if (scalar(value)) value = unit.quantity(value(value, ONE));
-        return to(value, unit.canonicalUnit());
-    }
-
-    public static Quantity<?> evaluateRaw(String expression, Function<String, ?> names) {
-        return numeric(evaluateAny(expression, names));
-    }
-
     private static final class Parser {
         final String input;
         final Function<String, ?> names;
         final ParameterUnit unit;
         int index, tokens, depth;
+
+        private static boolean asciiLetter(char c) {
+            return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z';
+        }
 
         Parser(String input, Function<String, ?> names, ParameterUnit unit) {
             if (input == null || input.isBlank() || input.length() > 512)
@@ -200,10 +114,6 @@ public class Expressions {
             } finally {
                 depth--;
             }
-        }
-
-        private static boolean asciiLetter(char c) {
-            return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z';
         }
 
         String word() {
@@ -328,5 +238,95 @@ public class Expressions {
                 }
             };
         }
+    }
+
+    public static boolean isFormula(String text) {
+        return text != null && text.stripLeading().startsWith("=");
+    }
+
+    /** Preserve a stored literal when displaying it in an expression-enabled text editor. */
+    public static String literalText(String text) {
+        return isFormula(text) ? "=\"" + text.replace("\"", "\"\"") + "\"" : text;
+    }
+
+    public static boolean isNumber(String text) {
+        return text != null && text.strip().matches("[+-]?(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?");
+    }
+
+    private static Quantity<?> numeric(Object value) {
+        if (value instanceof Quantity<?> quantity) return quantity;
+        throw new IllegalArgumentException("Expected a number, but the expression produced text");
+    }
+
+    /** Stable, locale-independent display; dimensional results use model units (mm/degrees). */
+    public static String format(Object value) {
+        if (value instanceof String text) return text;
+        double number = number(numeric(value));
+        if (!Double.isFinite(number)) throw new IllegalArgumentException("Expression must be finite");
+        return BigDecimal.valueOf(number).stripTrailingZeros().toPlainString();
+    }
+
+    /** Text is literal unless it starts with '='. Use doubled quotes inside string literals. */
+    public static String evaluateText(@NonNull String text, Function<String, ?> names) {
+
+        return isFormula(text) ? format(evaluateAny(text, names)) : text;
+    }
+
+    public static Object evaluateAny(String expression, Function<String, ?> names) {
+        return new Parser(expression, names, ParameterUnit.MM).parse();
+    }
+
+    private static boolean scalar(Quantity<?> q) {
+        return sameKind(q.getUnit(), ONE);
+    }
+
+    private static double number(Quantity<?> q) {
+        return q.getValue().doubleValue();
+    }
+
+    private static Quantity<?> implicit(Quantity<?> q, Quantity<?> dimensional, ParameterUnit unit) {
+        Unit<?> target = sameKind(unit.unit(), dimensional.getUnit()) ? unit.unit() : canonical(dimensional.getUnit());
+        return normalized(quantity(value(q, ONE), target));
+    }
+
+    private static <Q extends Quantity<Q>> Quantity<Q> sum(Quantity<Q> a, Quantity<?> b) {
+        return a.add(to(b, a.getUnit()));
+    }
+
+    private static Quantity<?> add(Quantity<?> a, Quantity<?> b, ParameterUnit unit) {
+        if (scalar(a) && !scalar(b)) a = implicit(a, b, unit);
+        if (scalar(b) && !scalar(a)) b = implicit(b, a, unit);
+        return normalized(sum(a, b));
+    }
+
+    private static Quantity<?> times(Quantity<?> a, Quantity<?> b, boolean divide) {
+        if (divide && number(b) == 0) throw new IllegalArgumentException("Division by zero");
+        return normalized(divide ? a.divide(b) : a.multiply(b));
+    }
+
+    public static boolean reserved(String name) {
+        return FUNCTIONS.contains(name)
+                || name.equals("pi")
+                || name.equals("e")
+                || name.equals("NaN")
+                || name.equals("Infinity")
+                || Arrays.stream(ParameterUnit.values())
+                        .anyMatch(u -> u.toString().equals(name));
+    }
+
+    public static String rename(String expression, String oldName, String newName) {
+        return TOKEN.matcher(expression)
+                .replaceAll(
+                        m -> java.util.regex.Matcher.quoteReplacement(m.group().equals(oldName) ? newName : m.group()));
+    }
+
+    public static Quantity<?> evaluate(String expression, ParameterUnit unit, Function<String, ?> names) {
+        var value = numeric(new Parser(expression, names, unit).parse());
+        if (scalar(value)) value = unit.quantity(value(value, ONE));
+        return to(value, unit.canonicalUnit());
+    }
+
+    public static Quantity<?> evaluateRaw(String expression, Function<String, ?> names) {
+        return numeric(evaluateAny(expression, names));
     }
 }

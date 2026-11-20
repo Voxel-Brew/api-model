@@ -8,13 +8,24 @@ import java.util.List;
 
 /** Runtime metadata shared across document edits; save count advances only after publication. */
 public final class BuiltinParameters {
+    private long fileVersion;
+
+    private Path projectPath;
     /** Built-in metadata is text except for the successful-save counter. */
     public static boolean isString(String name) {
         return name.startsWith("vb.") && !name.equals("vb.project.version");
     }
 
-    private long fileVersion;
-    private Path projectPath;
+    private static String applicationVersion() {
+        try (var input = BuiltinParameters.class.getResourceAsStream("/voxelbrew-model-api-version.properties")) {
+            if (input == null) return "0.0.0";
+            var properties = new java.util.Properties();
+            properties.load(input);
+            return properties.getProperty("version", "0.0.0");
+        } catch (java.io.IOException exception) {
+            throw new IllegalStateException("Cannot read model API build version", exception);
+        }
+    }
 
     /** File location is runtime context, never embedded into portable project definitions. */
     public synchronized void projectPath(Path path) {
@@ -45,17 +56,6 @@ public final class BuiltinParameters {
     public synchronized void fileVersion(long value) {
         if (value < 0) throw new IllegalArgumentException("Negative file version");
         fileVersion = value;
-    }
-
-    private static String applicationVersion() {
-        try (var input = BuiltinParameters.class.getResourceAsStream("/voxelbrew-model-api-version.properties")) {
-            if (input == null) return "0.0.0";
-            var properties = new java.util.Properties();
-            properties.load(input);
-            return properties.getProperty("version", "0.0.0");
-        } catch (java.io.IOException exception) {
-            throw new IllegalStateException("Cannot read model API build version", exception);
-        }
     }
 
     public Object value(String name) {

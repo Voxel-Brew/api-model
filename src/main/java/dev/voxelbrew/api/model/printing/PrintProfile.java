@@ -28,14 +28,6 @@ public record PrintProfile(
             double usableHeight,
             @NonNull String firmware,
             @NonNull String outputFormat) {
-        public Quantity<Length> nozzleDiameterQuantity() {
-            return quantity(nozzleMm, MILLIMETRE);
-        }
-
-        public Quantity<Length> usableHeightQuantity() {
-            return quantity(usableHeight, MILLIMETRE);
-        }
-
         public Printer {
 
             bed = List.copyOf(bed);
@@ -45,12 +37,31 @@ public record PrintProfile(
             if (!Double.isFinite(nozzleMm) || nozzleMm <= 0 || !Double.isFinite(usableHeight) || usableHeight <= 0)
                 throw new IllegalArgumentException("invalid nozzle or build height");
         }
+
+        public Quantity<Length> nozzleDiameterQuantity() {
+            return quantity(nozzleMm, MILLIMETRE);
+        }
+
+        public Quantity<Length> usableHeightQuantity() {
+            return quantity(usableHeight, MILLIMETRE);
+        }
     }
 
     public record Material(
             @NonNull String id, double filamentDiameter, double nozzleTemperature, double bedTemperature) {
         public Material(String id, Quantity<Length> diameter, Quantity<Temperature> nozzle, Quantity<Temperature> bed) {
             this(id, value(diameter, MILLIMETRE), value(nozzle, CELSIUS), value(bed, CELSIUS));
+        }
+
+        public Material {
+
+            if (id.isBlank()
+                    || !Double.isFinite(filamentDiameter)
+                    || filamentDiameter <= 0
+                    || !Double.isFinite(nozzleTemperature)
+                    || nozzleTemperature <= 0
+                    || !Double.isFinite(bedTemperature)
+                    || bedTemperature < 0) throw new IllegalArgumentException("Invalid material profile");
         }
 
         public Quantity<Length> filamentDiameterQuantity() {
@@ -64,20 +75,7 @@ public record PrintProfile(
         public Quantity<Temperature> bedTemperatureQuantity() {
             return quantity(bedTemperature, CELSIUS);
         }
-
-        public Material {
-
-            if (id.isBlank()
-                    || !Double.isFinite(filamentDiameter)
-                    || filamentDiameter <= 0
-                    || !Double.isFinite(nozzleTemperature)
-                    || nozzleTemperature <= 0
-                    || !Double.isFinite(bedTemperature)
-                    || bedTemperature < 0) throw new IllegalArgumentException("Invalid material profile");
-        }
     }
-
-    public PrintProfile {}
 
     /** Stable profile identity preserving a custom rectangular build volume in the document. */
     public static String rectangularPrinterId(double width, double depth, double height) {
@@ -133,4 +131,6 @@ public record PrintProfile(
         };
         return new PrintProfile(printer, material, setup.process());
     }
+
+    public PrintProfile {}
 }

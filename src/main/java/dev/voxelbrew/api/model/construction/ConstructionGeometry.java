@@ -5,8 +5,6 @@ import lombok.NonNull;
 
 /** Detached construction geometry in design-space millimeters. */
 public final class ConstructionGeometry {
-    private ConstructionGeometry() {}
-
     public record Vector(double x, double y, double z) {
         public Vector {
             if (!Double.isFinite(x) || !Double.isFinite(y) || !Double.isFinite(z))
@@ -106,4 +104,6 @@ public final class ConstructionGeometry {
         var seed = Math.abs(n.x) < .8 ? new Vector(1, 0, 0) : new Vector(0, 1, 0);
         return seed.minus(n.times(seed.dot(n))).unit();
     }
+
+    private ConstructionGeometry() {}
 }
