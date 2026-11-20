@@ -23,9 +23,10 @@ class ModelApiTest {
         assertThat(printer.bed().get(2)).isEqualTo(new PrintProfile.Point(250, 220));
         assertThat(printer.usableHeight()).isEqualTo(300);
         assertThat(PrintProfile.resolve(setup).printer().usableHeight()).isEqualTo(200);
-        for (double value : new double[] {0, -1, Double.NaN, Double.POSITIVE_INFINITY, 10001})
+        for (double value : new double[] {0, -1, Double.NaN, Double.POSITIVE_INFINITY, 10001}) {
             assertThatThrownBy(() -> PrintProfile.rectangularPrinterId(value, 200, 200))
                     .isInstanceOf(IllegalArgumentException.class);
+        }
     }
 
     @Test

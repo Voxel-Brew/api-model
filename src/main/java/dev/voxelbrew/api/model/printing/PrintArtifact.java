@@ -18,13 +18,16 @@ public record PrintArtifact(String format, String base64, String sha256, Map<Str
     }
 
     public PrintArtifact {
-        if (!Set.of("gcode", "gcode.3mf").contains(format))
+        if (!Set.of("gcode", "gcode.3mf").contains(format)) {
             throw new IllegalArgumentException("Unsupported print artifact format");
-        if (base64 == null || base64.length() > 64 * 1024 * 1024)
+        }
+        if (base64 == null || base64.length() > 64 * 1024 * 1024) {
             throw new IllegalArgumentException("Print artifact exceeds 48 MiB");
+        }
         byte[] bytes = Base64.getDecoder().decode(base64);
-        if (bytes.length == 0 || !hash(bytes).equals(sha256))
+        if (bytes.length == 0 || !hash(bytes).equals(sha256)) {
             throw new IllegalArgumentException("Invalid print artifact checksum");
+        }
         metadata = Map.copyOf(metadata);
     }
 

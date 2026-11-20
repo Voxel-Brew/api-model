@@ -11,6 +11,8 @@ public record Slider(@NonNull String id, @NonNull String label, double minimum, 
                 || !Double.isFinite(value)
                 || minimum >= maximum
                 || value < minimum
-                || value > maximum) throw new IllegalArgumentException("Invalid slider range or value");
+                || value > maximum) {
+            throw new IllegalArgumentException("Invalid slider range or value");
+        }
     }
 }

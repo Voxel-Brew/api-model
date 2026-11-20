@@ -21,11 +21,12 @@ public final class MeshGeometry {
     public static Bounds bounds(MeshData mesh) {
         double[] min = {Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY};
         double[] max = {Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY};
-        for (int v = 0; v < mesh.vertexCount(); v++)
+        for (int v = 0; v < mesh.vertexCount(); v++) {
             for (int axis = 0; axis < 3; axis++) {
                 min[axis] = Math.min(min[axis], mesh.coordinate(v, axis));
                 max[axis] = Math.max(max[axis], mesh.coordinate(v, axis));
             }
+        }
         return new Bounds(min[0], min[1], min[2], max[0], max[1], max[2]);
     }
 
@@ -45,7 +46,7 @@ public final class MeshGeometry {
         var world = transform(mesh, current);
         double[] n = null;
         double plane = 0;
-        for (int t = 0; t < world.triangleCount(); t++)
+        for (int t = 0; t < world.triangleCount(); t++) {
             if (world.faceIndex(t) == face) {
                 double[] next = MeshValidation.normal(world, t);
                 double len = Math.hypot(Math.hypot(next[0], next[1]), next[2]);
@@ -57,8 +58,9 @@ public final class MeshGeometry {
                     plane = n[0] * world.coordinate(v, 0)
                             + n[1] * world.coordinate(v, 1)
                             + n[2] * world.coordinate(v, 2);
-                } else if (n[0] * next[0] + n[1] * next[1] + n[2] * next[2] < 1 - 1e-8)
+                } else if (n[0] * next[0] + n[1] * next[1] + n[2] * next[2] < 1 - 1e-8) {
                     throw new IllegalArgumentException("Selected face is not planar");
+                }
                 for (int corner = 0; corner < 3; corner++) {
                     int v = world.vertexIndex(t, corner);
                     double d = n[0] * world.coordinate(v, 0)
@@ -67,6 +69,7 @@ public final class MeshGeometry {
                     if (Math.abs(d - plane) > 0.001) throw new IllegalArgumentException("Selected face is not planar");
                 }
             }
+        }
         if (n == null) throw new IllegalArgumentException("Face is unavailable in this revision: " + face);
         double cos = -n[2], vx = -n[1], vy = n[0], vz = 0;
         Transform rotation;
@@ -74,18 +77,20 @@ public final class MeshGeometry {
         else {
             double[][] k = {{0, -vz, vy}, {vz, 0, -vx}, {-vy, vx, 0}};
             double[] r = new double[12];
-            for (int row = 0; row < 3; row++)
+            for (int row = 0; row < 3; row++) {
                 for (int col = 0; col < 3; col++) {
                     r[4 * row + col] = (row == col ? 1 : 0) + k[row][col];
                     for (int i = 0; i < 3; i++) r[4 * row + col] += k[row][i] * k[i][col] / (1 + cos);
                 }
+            }
             rotation = new Transform(r);
         }
         var placed = rotation.compose(current);
         var before = bounds(world);
         var after = bounds(transform(mesh, placed));
-        if (Math.abs(-plane - after.minZ()) > 0.001)
+        if (Math.abs(-plane - after.minZ()) > 0.001) {
             throw new IllegalArgumentException("Selected face cannot lie on the bed without putting material below it");
+        }
         return Transform.translation(
                         (before.minX() + before.maxX() - after.minX() - after.maxX()) / 2,
                         (before.minY() + before.maxY() - after.minY() - after.maxY()) / 2,

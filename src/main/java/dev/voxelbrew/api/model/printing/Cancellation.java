@@ -37,7 +37,9 @@ public final class Cancellation {
 
     public synchronized Runnable onCancel(Runnable listener) {
         if (cancelled()) listener.run();
-        else listeners.add(listener);
+        else {
+            listeners.add(listener);
+        }
         return () -> {
             synchronized (this) {
                 listeners.remove(listener);

@@ -19,8 +19,9 @@ public record ParameterSet(
             if (!name.startsWith("vb.")) requireName(name);
 
             requireExpression(expression);
-            if (comment == null || comment.length() > 1024)
+            if (comment == null || comment.length() > 1024) {
                 throw new IllegalArgumentException("Comment is limited to 1024 characters");
+            }
         }
 
         @Override
@@ -32,9 +33,10 @@ public record ParameterSet(
     public record Configuration(String id, String name, Map<String, String> overrides) {
         public Configuration {
             CadDocument.identifier(id, "configuration ID");
-            if (name == null || name.isBlank() || name.length() > 80 || name.equalsIgnoreCase("Default"))
+            if (name == null || name.isBlank() || name.length() > 80 || name.equalsIgnoreCase("Default")) {
                 throw new IllegalArgumentException(
                         "Configuration needs a unique name (1–80 characters, other than Default)");
+            }
             overrides = Collections.unmodifiableMap(new LinkedHashMap<>(overrides));
             overrides.values().forEach(ParameterSet::requireExpression);
         }
@@ -48,8 +50,9 @@ public record ParameterSet(
     public record Target(String featureId, String field) {
         public Target {
             CadDocument.identifier(featureId, "bound feature ID");
-            if (field == null || !field.matches("[A-Za-z0-9_.:-]{1,150}"))
+            if (field == null || !field.matches("[A-Za-z0-9_.:-]{1,150}")) {
                 throw new IllegalArgumentException("Invalid dimension field");
+            }
         }
 
         @Override
@@ -73,14 +76,16 @@ public record ParameterSet(
         if (name == null
                 || !name.matches("[A-Za-z][A-Za-z_.]{0,63}")
                 || name.startsWith("vb.")
-                || Expressions.reserved(name))
+                || Expressions.reserved(name)) {
             throw new IllegalArgumentException(
                     "Parameter name must start with an ASCII letter, contain at most 64 ASCII letters/underscores/dots, and not start with vb. (reserved for built-in parameters) or be a unit or function");
+        }
     }
 
     private static void requireExpression(String expression) {
-        if (expression == null || expression.isBlank() || expression.length() > 512)
+        if (expression == null || expression.isBlank() || expression.length() > 512) {
             throw new IllegalArgumentException("Expression must contain 1–512 characters");
+        }
     }
 
     public ParameterSet(
@@ -104,25 +109,32 @@ public record ParameterSet(
         configurations = List.copyOf(configurations);
         bindings = List.copyOf(bindings);
 
-        if (parameters.size() > 128 || configurations.size() > 32 || bindings.size() > 2048)
+        if (parameters.size() > 128 || configurations.size() > 32 || bindings.size() > 2048) {
             throw new IllegalArgumentException("Limit: 128 parameters, 32 configurations and 2048 bound dimensions");
+        }
         Set<String> ids = new HashSet<>(), names = new HashSet<>();
-        for (var p : parameters)
-            if (!ids.add(p.id()) || !names.add(p.name()))
+        for (var p : parameters) {
+            if (!ids.add(p.id()) || !names.add(p.name())) {
                 throw new IllegalArgumentException("Duplicate parameter ID/name: " + p.name());
+            }
+        }
         var configurationIds = new HashSet<String>();
         names.clear();
         for (var c : configurations) {
-            if (!configurationIds.add(c.id()) || !names.add(c.name().toLowerCase(Locale.ROOT)))
+            if (!configurationIds.add(c.id()) || !names.add(c.name().toLowerCase(Locale.ROOT))) {
                 throw new IllegalArgumentException("Duplicate configuration: " + c.name());
-            if (!ids.containsAll(c.overrides().keySet()))
+            }
+            if (!ids.containsAll(c.overrides().keySet())) {
                 throw new IllegalArgumentException("Configuration overrides a missing parameter");
+            }
         }
-        if (!active.isEmpty() && !configurationIds.contains(active))
+        if (!active.isEmpty() && !configurationIds.contains(active)) {
             throw new IllegalArgumentException("Missing active configuration: " + active);
+        }
         var targets = new HashSet<Target>();
-        for (var b : bindings)
+        for (var b : bindings) {
             if (!targets.add(b.target())) throw new IllegalArgumentException("Duplicate binding: " + b.target());
+        }
     }
 
     public List<Parameter> allParameters() {
@@ -223,7 +235,7 @@ public record ParameterSet(
     public ParameterSet override(String nameOrId, String configuration, String expression) {
         var p = parameter(nameOrId);
         String id = configurationId(configuration);
-        if (id.isEmpty())
+        if (id.isEmpty()) {
             return new ParameterSet(
                     parameters.stream()
                             .map(v -> v.id().equals(p.id())
@@ -235,6 +247,7 @@ public record ParameterSet(
                     bindings,
                     uuidGenerator,
                     builtins);
+        }
         return new ParameterSet(
                 parameters,
                 configurations.stream()
@@ -242,7 +255,9 @@ public record ParameterSet(
                             if (!c.id().equals(id)) return c;
                             var values = new LinkedHashMap<>(c.overrides());
                             if (expression.isBlank()) values.remove(p.id());
-                            else values.put(p.id(), expression.strip());
+                            else {
+                                values.put(p.id(), expression.strip());
+                            }
                             return new Configuration(c.id(), c.name(), values);
                         })
                         .toList(),
@@ -356,9 +371,10 @@ public record ParameterSet(
                 if (resolved.containsKey(name)) return resolved.get(name);
                 var p = byName.get(name);
                 if (p == null) throw new IllegalArgumentException("Unknown parameter: " + name);
-                if (!visiting.add(name))
+                if (!visiting.add(name)) {
                     throw new IllegalArgumentException(
                             "Cyclic parameter dependency: " + String.join(" → ", visiting) + " → " + name);
+                }
                 if (visiting.size() > 32) throw new IllegalArgumentException("Parameter dependency depth exceeds 32");
                 try {
                     var q = Expressions.evaluate(expression(p, id), p.unit(), this::get);
@@ -406,10 +422,11 @@ public record ParameterSet(
         for (var id : ids) {
             try {
                 var values = values(id);
-                for (var binding : bindings)
+                for (var binding : bindings) {
                     Expressions.evaluateAny(
                             binding.expression(),
                             name -> name.startsWith("vb.") ? builtins.value(name) : values.get(name));
+                }
             } catch (IllegalArgumentException failure) {
                 String name = id.isEmpty()
                         ? "Default"

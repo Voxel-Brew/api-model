@@ -31,8 +31,9 @@ public record CadDocument(
         if (name == null
                 || name.isBlank()
                 || name.length() > 128
-                || name.codePoints().anyMatch(Character::isISOControl))
+                || name.codePoints().anyMatch(Character::isISOControl)) {
             throw new IllegalArgumentException("Body name must contain 1–128 characters and no control characters");
+        }
     }
 
     public static void identifier(String id, String field) {
@@ -113,8 +114,9 @@ public record CadDocument(
         gcode.forEach((plate, lines) -> {
             identifier(plate, "G-code plate ID");
             var copy = List.copyOf(lines);
-            if (copy.stream().anyMatch(line -> line.indexOf('\n') >= 0 || line.indexOf('\r') >= 0))
+            if (copy.stream().anyMatch(line -> line.indexOf('\n') >= 0 || line.indexOf('\r') >= 0)) {
                 throw new IllegalArgumentException("Each G-code element must contain one line");
+            }
             if (!copy.isEmpty()) jobs.put(plate, copy);
         });
         gcode = Map.copyOf(jobs);

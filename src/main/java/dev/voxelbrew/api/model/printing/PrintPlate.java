@@ -24,8 +24,9 @@ public record PrintPlate(String id, @NonNull String name, List<BodyInstance> ins
             if (!ids.add(instance.id())) throw new IllegalArgumentException("Duplicate instance " + instance.id());
         }
         ids.clear();
-        for (var support : supports)
+        for (var support : supports) {
             if (!ids.add(support.id())) throw new IllegalArgumentException("Duplicate support " + support.id());
+        }
     }
 
     public PrintPlate withName(@NonNull String value) {

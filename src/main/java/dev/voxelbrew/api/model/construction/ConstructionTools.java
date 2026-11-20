@@ -74,8 +74,9 @@ public final class ConstructionTools {
     public static Plane angledPlane(Plane source, Axis axis, double degrees) {
         finite(degrees);
         if (Math.abs(source.normal().dot(axis.direction())) > TOLERANCE
-                || Math.abs(source.origin().minus(axis.origin()).dot(source.normal())) > TOLERANCE)
+                || Math.abs(source.origin().minus(axis.origin()).dot(source.normal())) > TOLERANCE) {
             throw new IllegalArgumentException("Rotation edge must lie in the reference plane");
+        }
         double angle = Math.toRadians(degrees);
         return new Plane(
                 axis.origin(),
@@ -105,11 +106,13 @@ public final class ConstructionTools {
 
     public static Plane planeTwoEdges(Axis first, Axis second) {
         var normal = first.direction().cross(second.direction());
-        if (normal.length() < TOLERANCE)
+        if (normal.length() < TOLERANCE) {
             normal = first.direction().cross(second.origin().minus(first.origin()));
+        }
         normal = normal.unit();
-        if (Math.abs(second.origin().minus(first.origin()).dot(normal)) > TOLERANCE)
+        if (Math.abs(second.origin().minus(first.origin()).dot(normal)) > TOLERANCE) {
             throw new IllegalArgumentException("Skew edges do not define a plane");
+        }
         return new Plane(first.origin(), normal, first.direction());
     }
 
@@ -162,8 +165,9 @@ public final class ConstructionTools {
         double denominator = n.dot(n);
         if (denominator < 1e-14) throw new IllegalArgumentException("Parallel edges have no unique intersection");
         var delta = second.origin().minus(first.origin());
-        if (Math.abs(delta.dot(n.unit())) > TOLERANCE)
+        if (Math.abs(delta.dot(n.unit())) > TOLERANCE) {
             throw new IllegalArgumentException("Skew edges do not intersect");
+        }
         return new Point(first.origin()
                 .plus(first.direction().times(delta.cross(second.direction()).dot(n) / denominator)));
     }
@@ -178,8 +182,9 @@ public final class ConstructionTools {
 
     public static Point pointEdgePlane(Axis edge, Plane plane) {
         double denominator = edge.direction().dot(plane.normal());
-        if (Math.abs(denominator) < TOLERANCE)
+        if (Math.abs(denominator) < TOLERANCE) {
             throw new IllegalArgumentException("Edge and plane have no unique intersection");
+        }
         double distance = plane.origin().minus(edge.origin()).dot(plane.normal()) / denominator;
         return new Point(edge.origin().plus(edge.direction().times(distance)));
     }

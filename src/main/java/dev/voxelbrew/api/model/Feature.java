@@ -36,8 +36,9 @@ public sealed interface Feature
 
             if (!constructionSupport.isEmpty()) {
                 CadDocument.identifier(constructionSupport, "construction plane support");
-                if (support != null)
+                if (support != null) {
                     throw new IllegalArgumentException("Plane cannot have both face and construction supports");
+                }
             }
         }
 

@@ -60,23 +60,32 @@ public record SketchGeometry(List<Entity> entities, List<Constraint> constraints
 
             values = List.copyOf(values);
             boolean variable = kind == Kind.FIT_SPLINE || kind == Kind.CONTROL_SPLINE;
+            int minimumFitCoordinates = closed ? 6 : 4;
             if (variable
                     && (values.size() % 2 != 0
                             || values.size() > 64
-                            || values.size() < (kind == Kind.CONTROL_SPLINE ? (degree + 1) * 2 : closed ? 6 : 4)))
+                            || values.size()
+                                    < (kind == Kind.CONTROL_SPLINE ? (degree + 1) * 2 : minimumFitCoordinates))) {
                 throw new IllegalArgumentException("A spline needs 2–32 fit points or degree+1–32 control points");
-            if (kind == Kind.CONTROL_SPLINE && degree != 3 && degree != 5)
+            }
+            if (kind == Kind.CONTROL_SPLINE && degree != 3 && degree != 5) {
                 throw new IllegalArgumentException("Control spline degree must be 3 or 5");
-            if ((kind != Kind.CONTROL_SPLINE && degree != 0) || (!variable && closed))
+            }
+            if ((kind != Kind.CONTROL_SPLINE && degree != 0) || (!variable && closed)) {
                 throw new IllegalArgumentException("Degree and closed flags apply only to spline types");
-            if ((kind == Kind.TEXT) != (text != null))
+            }
+            if ((kind == Kind.TEXT) != (text != null)) {
                 throw new IllegalArgumentException("Text geometry requires its persisted glyph outlines");
-            if (!variable && values.size() != kind.parameters().size())
+            }
+            if (!variable && values.size() != kind.parameters().size()) {
                 throw new IllegalArgumentException(
                         kind + " needs " + kind.parameters().size() + " parameters");
-            for (double value : values)
-                if (!Double.isFinite(value))
+            }
+            for (double value : values) {
+                if (!Double.isFinite(value)) {
                     throw new IllegalArgumentException("Entity " + id + ": coordinates must be finite");
+                }
+            }
         }
 
         public double value(int i) {
@@ -101,9 +110,11 @@ public record SketchGeometry(List<Entity> entities, List<Constraint> constraints
 
         public List<Ref> pointRefs() {
             var result = new ArrayList<>(points().stream().map(this::ref).toList());
-            if (kind == Kind.FIT_SPLINE || kind == Kind.CONTROL_SPLINE)
-                for (int i = 0; i < values.size() / 2; i++)
+            if (kind == Kind.FIT_SPLINE || kind == Kind.CONTROL_SPLINE) {
+                for (int i = 0; i < values.size() / 2; i++) {
                     result.add(new Ref(id, kind == Kind.FIT_SPLINE ? Part.FIT : Part.CONTROL, i));
+                }
+            }
             return List.copyOf(result);
         }
 
@@ -111,8 +122,9 @@ public record SketchGeometry(List<Entity> entities, List<Constraint> constraints
             if (ref.part() == Part.FIT || ref.part() == Part.CONTROL) {
                 if ((ref.part() == Part.FIT ? kind != Kind.FIT_SPLINE : kind != Kind.CONTROL_SPLINE)
                         || ref.index() < 0
-                        || ref.index() >= values.size() / 2)
+                        || ref.index() >= values.size() / 2) {
                     throw new IllegalArgumentException("Invalid spline point: " + ref);
+                }
                 return new Vec(value(2 * ref.index()), value(2 * ref.index() + 1));
             }
             return point(ref.part());
@@ -156,7 +168,9 @@ public record SketchGeometry(List<Entity> entities, List<Constraint> constraints
                     || kind == Kind.CONIC
                     || kind == Kind.FIT_SPLINE
                     || kind == Kind.CONTROL_SPLINE
-                    || kind == Kind.TEXT) return SketchCurves.at(this, t, 0);
+                    || kind == Kind.TEXT) {
+                return SketchCurves.at(this, t, 0);
+            }
             return switch (kind) {
                 case POINT -> new Vec(value(0), value(1));
                 case LINE -> new Vec(value(0), value(1)).mix(new Vec(value(2), value(3)), t);
@@ -181,7 +195,9 @@ public record SketchGeometry(List<Entity> entities, List<Constraint> constraints
                     || kind == Kind.CONIC
                     || kind == Kind.FIT_SPLINE
                     || kind == Kind.CONTROL_SPLINE
-                    || kind == Kind.TEXT) return SketchCurves.at(this, t, 1);
+                    || kind == Kind.TEXT) {
+                return SketchCurves.at(this, t, 1);
+            }
             return switch (kind) {
                 case POINT -> new Vec(0, 0);
                 case LINE -> at(1).minus(at(0));
@@ -254,11 +270,12 @@ public record SketchGeometry(List<Entity> entities, List<Constraint> constraints
                 try {
                     String suffix = value.substring(dot + 1);
                     int bracket = suffix.indexOf('[');
-                    if (bracket > 0 && suffix.endsWith("]"))
+                    if (bracket > 0 && suffix.endsWith("]")) {
                         return new Ref(
                                 value.substring(0, dot),
                                 Part.valueOf(suffix.substring(0, bracket).toUpperCase(java.util.Locale.ROOT)),
                                 Integer.parseInt(suffix.substring(bracket + 1, suffix.length() - 1)));
+                    }
                     return new Ref(
                             value.substring(0, dot),
                             Part.valueOf(value.substring(dot + 1).toUpperCase(java.util.Locale.ROOT)));
@@ -276,18 +293,17 @@ public record SketchGeometry(List<Entity> entities, List<Constraint> constraints
         public Ref {
             CadDocument.identifier(entityId, "sketch reference ID");
 
-            if (index < 0 || index > 31 || (part != Part.CONTROL && part != Part.FIT && index != 0))
+            if (index < 0 || index > 31 || (part != Part.CONTROL && part != Part.FIT && index != 0)) {
                 throw new IllegalArgumentException("Invalid reference index");
+            }
         }
 
         @Override
         public String toString() {
-            return entityId
-                    + (part == Part.OBJECT
-                            ? ""
-                            : "."
-                                    + part.name().toLowerCase(java.util.Locale.ROOT)
-                                    + (part == Part.CONTROL || part == Part.FIT ? "[" + index + "]" : ""));
+            if (part == Part.OBJECT) return entityId;
+            return entityId + "."
+                    + part.name().toLowerCase(java.util.Locale.ROOT)
+                    + (part == Part.CONTROL || part == Part.FIT ? "[" + index + "]" : "");
         }
     }
 
@@ -338,9 +354,11 @@ public record SketchGeometry(List<Entity> entities, List<Constraint> constraints
 
             refs = List.copyOf(refs);
             values = List.copyOf(values);
-            for (double value : values)
-                if (!Double.isFinite(value))
+            for (double value : values) {
+                if (!Double.isFinite(value)) {
                     throw new IllegalArgumentException("Constraint " + id + ": values must be finite");
+                }
+            }
         }
 
         public Constraint withValue(double value) {
@@ -410,17 +428,22 @@ public record SketchGeometry(List<Entity> entities, List<Constraint> constraints
         entities = List.copyOf(entities);
         constraints = List.copyOf(constraints);
         boundary = List.copyOf(boundary);
-        if (entities.size() > 64 || constraints.size() > 256)
+        if (entities.size() > 64 || constraints.size() > 256) {
             throw new IllegalArgumentException("A sketch supports up to 64 entities and 256 constraints");
+        }
         var ids = new HashSet<String>();
-        for (var e : entities)
-            if (e.id().equals("origin") || !ids.add(e.id()))
+        for (var e : entities) {
+            if (e.id().equals("origin") || !ids.add(e.id())) {
                 throw new IllegalArgumentException("Duplicate or reserved sketch entity ID: " + e.id());
+            }
+        }
         ids.clear();
-        for (var c : constraints)
+        for (var c : constraints) {
             if (!ids.add(c.id())) throw new IllegalArgumentException("Duplicate constraint ID: " + c.id());
-        if (new HashSet<>(boundary).size() != boundary.size())
+        }
+        if (new HashSet<>(boundary).size() != boundary.size()) {
             throw new IllegalArgumentException("Duplicate profile boundary entity");
+        }
     }
 
     public Entity entity(String id) {

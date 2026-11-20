@@ -17,8 +17,9 @@ public record HardwareSettings(
         for (int i = 0; i < points.size(); i++) {
             var a = points.get(i);
             var b = points.get((i + 1) % points.size());
-            if (Math.abs(a.x()) > 10000 || Math.abs(a.y()) > 10000)
+            if (Math.abs(a.x()) > 10000 || Math.abs(a.y()) > 10000) {
                 throw new IllegalArgumentException("Bed coordinate exceeds supported limits");
+            }
             area += a.x() * b.y() - b.x() * a.y();
         }
         if (Math.abs(area) < 1e-6) throw new IllegalArgumentException("Degenerate bed polygon");
@@ -34,16 +35,20 @@ public record HardwareSettings(
                 || filamentDiameter <= 0
                 || filamentDiameter > 10
                 || toolCount < 1
-                || toolCount > 64) throw new IllegalArgumentException("Invalid printer hardware");
+                || toolCount > 64) {
+            throw new IllegalArgumentException("Invalid printer hardware");
+        }
         validatePolygon(printer.bed());
         printer.excludedZones().forEach(HardwareSettings::validatePolygon);
-        if (printer.usableHeight() > 10000 || printer.nozzleMm() > 10)
+        if (printer.usableHeight() > 10000 || printer.nozzleMm() > 10) {
             throw new IllegalArgumentException("Printer dimensions exceed supported limits");
+        }
         if (genericGcode
                 && (toolCount != 1
                         || !printer.firmware().equals("marlin2")
-                        || !printer.outputFormat().equals("gcode")))
+                        || !printer.outputFormat().equals("gcode"))) {
             throw new IllegalArgumentException("Generic G-code requires one Marlin 2 tool and text G-code");
+        }
     }
 
     public HardwareSettings rectangular(double width, double depth, double height) {
@@ -68,8 +73,9 @@ public record HardwareSettings(
     }
 
     public HardwareSettings withNozzle(double diameterMm) {
-        if (!Double.isFinite(diameterMm) || diameterMm <= 0 || diameterMm > 5)
+        if (!Double.isFinite(diameterMm) || diameterMm <= 0 || diameterMm > 5) {
             throw new IllegalArgumentException("Nozzle diameter must be greater than 0 and at most 5 mm");
+        }
         if (Double.compare(printer.nozzleMm(), diameterMm) == 0) return this;
         return new HardwareSettings(
                 new PrintProfile.Printer(

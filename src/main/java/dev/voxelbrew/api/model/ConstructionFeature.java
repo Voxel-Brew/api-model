@@ -34,14 +34,18 @@ public record ConstructionFeature(
         public Input {
 
             if (index < 0) throw new IllegalArgumentException("Negative construction reference index");
-            if ((selection == Selection.ORIGIN_PLANE || selection == Selection.ORIGIN_AXIS) && index > 2)
+            if ((selection == Selection.ORIGIN_PLANE || selection == Selection.ORIGIN_AXIS) && index > 2) {
                 throw new IllegalArgumentException("Unknown origin direction");
-            if (selection == Selection.DATUM && index > 6)
+            }
+            if (selection == Selection.DATUM && index > 6) {
                 throw new IllegalArgumentException("Unknown coordinate-system component");
+            }
             if (selection == Selection.DATUM
                     || selection == Selection.FACE
                     || selection == Selection.EDGE
-                    || selection == Selection.VERTEX) CadDocument.identifier(source, "construction input");
+                    || selection == Selection.VERTEX) {
+                CadDocument.identifier(source, "construction input");
+            }
         }
     }
 

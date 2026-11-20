@@ -24,9 +24,11 @@ public record SupportVolume(
         CadDocument.identifier(id, "support ID");
         CadDocument.identifier(instanceId, "support instance ID");
 
-        for (double value : new double[] {x, y, z, width, depth, height, x + width, y + depth, z + height})
+        for (double value : new double[] {x, y, z, width, depth, height, x + width, y + depth, z + height}) {
             if (!Double.isFinite(value)) throw new IllegalArgumentException("support dimensions must be finite");
-        if (width < 1e-6 || depth < 1e-6 || height < 1e-6)
+        }
+        if (width < 1e-6 || depth < 1e-6 || height < 1e-6) {
             throw new IllegalArgumentException("support dimensions must be positive");
+        }
     }
 }

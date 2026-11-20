@@ -17,12 +17,16 @@ public class SketchText {
         public Glyph {
             if (!Double.isFinite(advance) || advance < -1) throw new IllegalArgumentException("Invalid glyph advance");
             contours = contours.stream().map(List::copyOf).toList();
-            if (contours.stream().mapToInt(List::size).sum() > 512)
+            if (contours.stream().mapToInt(List::size).sum() > 512) {
                 throw new IllegalArgumentException("Glyph is too complex");
-            for (var contour : contours)
-                for (var curve : contour)
-                    if (curve.kind() != Kind.LINE && curve.kind() != Kind.SPLINE)
+            }
+            for (var contour : contours) {
+                for (var curve : contour) {
+                    if (curve.kind() != Kind.LINE && curve.kind() != Kind.SPLINE) {
                         throw new IllegalArgumentException("Glyph outlines must contain lines and cubic curves");
+                    }
+                }
+            }
         }
     }
 
@@ -39,8 +43,9 @@ public class SketchText {
                     || content.codePointCount(0, content.length()) > 32
                     || glyphs.size() != content.codePointCount(0, content.length())
                     || style < 0
-                    || style > 3)
+                    || style > 3) {
                 throw new IllegalArgumentException("Text needs 1–32 characters and valid glyph outlines");
+            }
             if (!pathId.isEmpty()) dev.voxelbrew.api.model.CadDocument.identifier(pathId, "text path ID");
         }
     }
@@ -57,12 +62,15 @@ public class SketchText {
             double spacing,
             String pathId,
             boolean construction) {
-        if (content.isBlank() || content.codePointCount(0, content.length()) > 32)
+        if (content.isBlank() || content.codePointCount(0, content.length()) > 32) {
             throw new IllegalArgumentException("Text needs 1–32 characters");
+        }
         var font = new Font(fontName, style, 1000);
         if (!fontName.equalsIgnoreCase(font.getFamily())
                 && !Set.of("SansSerif", "Serif", "Monospaced", "Dialog", "DialogInput")
-                        .contains(fontName)) throw new IllegalArgumentException("Font is not installed: " + fontName);
+                        .contains(fontName)) {
+            throw new IllegalArgumentException("Font is not installed: " + fontName);
+        }
         var context = new FontRenderContext(new AffineTransform(), true, true);
         var glyphs = new ArrayList<Glyph>();
         for (int code : content.codePoints().toArray()) {
@@ -70,8 +78,9 @@ public class SketchText {
                 glyphs.add(new Glyph(-1, List.of()));
                 continue;
             }
-            if (!font.canDisplay(code))
+            if (!font.canDisplay(code)) {
                 throw new IllegalArgumentException("The font cannot display U+" + Integer.toHexString(code));
+            }
             var vector = font.createGlyphVector(context, new String(Character.toChars(code)));
             var iterator = vector.getOutline().getPathIterator(null);
             var contours = new ArrayList<List<Entity>>();
@@ -140,8 +149,9 @@ public class SketchText {
         var data = text.text();
         if (data == null) return List.of(text);
         Entity path = data.pathId().isEmpty() ? null : geometry.entity(data.pathId());
-        if (path != null && (path.kind() == Kind.TEXT || path.kind() == Kind.POINT))
+        if (path != null && (path.kind() == Kind.TEXT || path.kind() == Kind.POINT)) {
             throw new IllegalArgumentException("Text path must be a curve");
+        }
         var result = new ArrayList<Entity>();
         double scale = text.value(2) / 1000, x = 0, y = 0;
         int glyphIndex = -1;
@@ -167,7 +177,7 @@ public class SketchText {
                 angle += Math.atan2(tangent.y(), tangent.x());
                 localX = -glyph.advance() / 2;
             }
-            for (var contour : glyph.contours())
+            for (var contour : glyph.contours()) {
                 for (var curve : contour) {
                     var values = new ArrayList<Double>();
                     for (int i = 0; i < curve.values().size(); i += 2) {
@@ -184,6 +194,7 @@ public class SketchText {
                             values,
                             text.construction()));
                 }
+            }
             x += glyph.advance() + text.value(4) * 1000;
         }
         return List.copyOf(result);
@@ -194,8 +205,9 @@ public class SketchText {
         double length = 0;
         for (int i = 1; i < points.size(); i++) length += points.get(i - 1).distance(points.get(i));
         if (curve.loop()) distance = ((distance % length) + length) % length;
-        if (distance < 0 || distance > length)
+        if (distance < 0 || distance > length) {
             throw new IllegalArgumentException("Text extends beyond its path; reduce height, spacing or offset");
+        }
         for (int i = 1; i < points.size(); i++) {
             double span = points.get(i - 1).distance(points.get(i));
             if (distance <= span) return (i - 1 + (span == 0 ? 0 : distance / span)) / (points.size() - 1);
