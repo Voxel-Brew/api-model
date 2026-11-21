@@ -1,9 +1,12 @@
 package dev.voxelbrew.api.i18n;
 
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import org.slf4j.LoggerFactory;
 
 /** Thread-safe service for resolving and registering localized application messages. */
 public interface TranslationService {
@@ -36,7 +39,17 @@ public interface TranslationService {
      * @param arguments values substituted using {@link java.text.MessageFormat} when provided
      * @return localized text, or an empty optional if neither locale contains the key
      */
-    Optional<String> translate(String key, Object... arguments);
+    Optional<String> tryTranslate(String key, Object... arguments);
+
+    /** @return localized text or a diagnostic string when the key is missing */
+    default String translate(String key, Object... arguments) {
+        return tryTranslate(key, arguments).orElseGet(() -> {
+            var locale = currentLocale();
+            LoggerFactory.getLogger(getClass()).warn("Missing translation for key '{}' in locale '{}'", key, locale);
+            var arg = Arrays.stream(arguments).map(Object::toString).collect(Collectors.joining(", "));
+            return "%s:%s[%s]".formatted(locale, key, arg);
+        });
+    }
 
     /**
      * Adds or replaces a translation for the supplied locale and key.
