@@ -17,13 +17,13 @@ public final class BuiltinParameters {
     }
 
     private static String applicationVersion() {
-        try (var input = BuiltinParameters.class.getResourceAsStream("/voxelbrew-model-api-version.properties")) {
+        try (var input = BuiltinParameters.class.getResourceAsStream("/META-INF/voxelbrew/application.properties")) {
             if (input == null) return "0.0.0";
             var properties = new java.util.Properties();
             properties.load(input);
             return properties.getProperty("version", "0.0.0");
         } catch (java.io.IOException exception) {
-            throw new IllegalStateException("Cannot read model API build version", exception);
+            throw new IllegalStateException("Cannot read VoxelBrew application version", exception);
         }
     }
 
