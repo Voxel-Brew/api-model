@@ -9,16 +9,6 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class TranslationServiceTest {
-    @Test
-    void translateUsesResolvedTextAndFormatsMissingKeys() {
-        TranslationService service = new TestTranslationService();
-
-        assertThat(service.translate("test.greeting", "Ada")).isEqualTo("Hello Ada");
-        assertThat(service.tryTranslate("test.missing")).isEmpty();
-        assertThat(service.translate("test.missing")).isEqualTo("en:test.missing[]");
-        assertThat(service.translate("test.missing", "Ada", 2)).isEqualTo("en:test.missing[Ada, 2]");
-    }
-
     private static final class TestTranslationService implements TranslationService {
         @Override
         public Locale currentLocale() {
@@ -49,5 +39,15 @@ class TranslationServiceTest {
         public String registerTranslation(Locale locale, String key, String text) {
             throw new UnsupportedOperationException();
         }
+    }
+
+    @Test
+    void translateUsesResolvedTextAndFormatsMissingKeys() {
+        TranslationService service = new TestTranslationService();
+
+        assertThat(service.translate("test.greeting", "Ada")).isEqualTo("Hello Ada");
+        assertThat(service.tryTranslate("test.missing")).isEmpty();
+        assertThat(service.translate("test.missing")).isEqualTo("en:test.missing[]");
+        assertThat(service.translate("test.missing", "Ada", 2)).isEqualTo("en:test.missing[Ada, 2]");
     }
 }
