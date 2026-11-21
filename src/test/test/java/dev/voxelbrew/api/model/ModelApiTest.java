@@ -45,8 +45,7 @@ class ModelApiTest {
         assertThat(model.instances().isEmpty()).isTrue();
         assertThatThrownBy(() -> model.mesh("missing")).isInstanceOf(IllegalArgumentException.class);
         assertThat(MeshOptions.DEFAULT).isNotNull();
-        assertThat(((String) new BuiltinParameters().value("vb.version")).contains("${"))
-                .isFalse();
+        assertThat(new BuiltinParameters().value("vb.version")).isEqualTo("0.0.0");
     }
 
     @Test
