@@ -83,6 +83,11 @@ public interface UserConfigService {
         return homeFolder().resolve("slicers");
     }
 
+    /** @return the location reserved for automatic project backups */
+    default Path backupsFolder() {
+        return homeFolder().resolve("backups");
+    }
+
     /** @return the location reserved for application logs */
     default Path logsFolder() {
         return homeFolder().resolve("log");
