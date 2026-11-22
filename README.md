@@ -28,8 +28,8 @@ available without signing credentials.
 ### GitHub Actions
 
 1. Run **Prepare release** (`release-prepare.yml`) on `master`. It creates
-   `release/A.B.x`, pins the BOM to an exact release, and advances master
-   to the next minor snapshot using an atomic push. Optional `bom-version` selects the released BOM. Otherwise the current BOM
+   `release/A.B.x`, pins the BOM to an exact release, and opens a PR advancing master
+   to the next minor snapshot. Optional `bom-version` selects the released BOM. Otherwise the current BOM
    version without `-SNAPSHOT` is used; that release must exist in Central before
    publishing this API.
 2. Run **Publish to prod** (`release.yml`) on that release branch with the default
@@ -83,9 +83,7 @@ do not upload again. Check out the same source, run `node .github/scripts/releas
 candidate` with the original workflow's `GITHUB_REF_NAME`, `GITHUB_SHA` and
 `GITHUB_REPOSITORY`, verify the existing Central release, then run `node
 .github/scripts/release.cjs finish` with an authorized `GH_TOKEN`. This final step
-creates the GitHub release if absent and advances the branch. Port release fixes
-back to master through normal reviewed changes; do not merge release version
-bumps into master.
+creates the GitHub release if absent and advances the branch. The merge-back workflow opens a PR for release fixes and keeps master's project version.
 
 References: [Central requirements](https://central.sonatype.org/publish/requirements/)
 and [Gradle Central publishing plugin](https://vanniktech.github.io/gradle-maven-publish-plugin/central/).
