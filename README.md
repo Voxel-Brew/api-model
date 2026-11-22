@@ -97,6 +97,20 @@ For local development, publish `../../BOM` to Maven local first and pass
 `-PuseMavenLocal=true`, or use the parent workspace composite.
 Standalone builds require the selected BOM to be published before use.
 
+## Slicer parameters
+
+Expressions evaluated through `CadDocument.parameters()` can use read-only numeric
+values from that document's applied print setup. For example,
+`$vb.slicer.nozzle_diameter * $vb.slicer.walls` gives the nominal width of the
+perimeter walls. A new document uses its default print setup.
+
+| Unit                     | Names under `vb.slicer.`                                                                    |
+| ------------------------ | ------------------------------------------------------------------------------------------- |
+| Millimetres              | `nozzle_diameter`, `filament_diameter`, `layer_height`, `brim_width`, `support_contact_gap` |
+| Degrees from horizontal  | `support_threshold`                                                                         |
+| Layer or wall count      | `walls`, `interface_layers`, `raft_layers`                                                  |
+| Percentage from 0 to 100 | `infill_percent`                                                                            |
+
 ## Virtual UI
 
 The `dev.voxelbrew.api.model.vui` package provides shared frontend-neutral controls

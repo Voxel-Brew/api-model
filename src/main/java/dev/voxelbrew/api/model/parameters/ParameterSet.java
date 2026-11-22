@@ -147,6 +147,13 @@ public record ParameterSet(
         return new ParameterSet(parameters, configurations, active, bindings, generator, builtins);
     }
 
+    public ParameterSet withPrintSetup(dev.voxelbrew.api.model.printing.PrintSetup setup) {
+        var context = builtins.withPrintSetup(setup);
+        return context == builtins
+                ? this
+                : new ParameterSet(parameters, configurations, active, bindings, uuidGenerator, context);
+    }
+
     @Override
     public boolean equals(Object other) {
         return other instanceof ParameterSet p
@@ -389,7 +396,7 @@ public record ParameterSet(
         }
         var resolver = new Resolver();
         parameters.forEach(p -> resolver.get(p.name()));
-        resolved.put("vb.project.version", ParameterUnit.NUMBER.quantity(builtins.fileVersion()));
+        resolved.putAll(builtins.numericValues());
         return Collections.unmodifiableMap(resolved);
     }
 
