@@ -108,6 +108,7 @@ public record CadDocument(
     }
 
     public CadDocument {
+        parameters = parameters.withPrintSetup(printSetup);
         printArtifacts = Map.copyOf(printArtifacts);
         printArtifacts.keySet().forEach(plate -> identifier(plate, "Print artifact plate ID"));
         var jobs = new java.util.TreeMap<String, List<String>>();
