@@ -12,6 +12,18 @@ import lombok.NonNull;
 /** Headless font outlines, persisted so reopening never depends on installed fonts. */
 @lombok.experimental.UtilityClass
 public class SketchText {
+    public enum Horizontal {
+        LEFT,
+        CENTER,
+        RIGHT
+    }
+
+    public enum Vertical {
+        BASELINE,
+        TOP,
+        MIDDLE,
+        BOTTOM
+    }
 
     public record Glyph(double advance, List<List<Entity>> contours) {
         public Glyph {
@@ -35,7 +47,13 @@ public class SketchText {
             @NonNull String font,
             int style,
             @NonNull String pathId,
-            List<Glyph> glyphs) {
+            List<Glyph> glyphs,
+            @NonNull Horizontal horizontal,
+            @NonNull Vertical vertical) {
+        public Data(String content, String font, int style, String pathId, List<Glyph> glyphs) {
+            this(content, font, style, pathId, glyphs, Horizontal.LEFT, Vertical.BASELINE);
+        }
+
         public Data {
 
             glyphs = List.copyOf(glyphs);
@@ -62,6 +80,36 @@ public class SketchText {
             double spacing,
             String pathId,
             boolean construction) {
+        return create(
+                id,
+                content,
+                fontName,
+                style,
+                x,
+                y,
+                height,
+                angle,
+                spacing,
+                pathId,
+                construction,
+                Horizontal.LEFT,
+                Vertical.BASELINE);
+    }
+
+    public static Entity create(
+            String id,
+            String content,
+            String fontName,
+            int style,
+            double x,
+            double y,
+            double height,
+            double angle,
+            double spacing,
+            String pathId,
+            boolean construction,
+            Horizontal horizontal,
+            Vertical vertical) {
         if (content.isBlank() || content.codePointCount(0, content.length()) > 32) {
             throw new IllegalArgumentException("Text needs 1–32 characters");
         }
@@ -138,7 +186,7 @@ public class SketchText {
                 construction,
                 0,
                 false,
-                new Data(content, fontName, style, pathId, glyphs));
+                new Data(content, fontName, style, pathId, glyphs, horizontal, vertical));
     }
 
     private static Entity line(String id, Vec a, Vec b) {
@@ -153,6 +201,7 @@ public class SketchText {
             throw new IllegalArgumentException("Text path must be a curve");
         }
         var result = new ArrayList<Entity>();
+        boolean align = path == null && (data.horizontal() != Horizontal.LEFT || data.vertical() != Vertical.BASELINE);
         double scale = text.value(2) / 1000, x = 0, y = 0;
         int glyphIndex = -1;
         for (var glyph : data.glyphs()) {
@@ -163,8 +212,8 @@ public class SketchText {
                 y -= 1200;
                 continue;
             }
-            double angle = text.value(3);
-            Vec origin = new Vec(text.value(0), text.value(1));
+            double angle = align ? 0 : text.value(3);
+            Vec origin = align ? new Vec(0, 0) : new Vec(text.value(0), text.value(1));
             double localX = x, localY = y;
             if (path != null) {
                 // Check both advance endpoints, even when the glyph center still fits.
@@ -197,7 +246,48 @@ public class SketchText {
             }
             x += glyph.advance() + text.value(4) * 1000;
         }
-        return List.copyOf(result);
+        if (!align || result.isEmpty()) return List.copyOf(result);
+        var xs = new DoubleSummaryStatistics();
+        var ys = new DoubleSummaryStatistics();
+        for (var curve : result) {
+            for (var point : curve.sample()) {
+                xs.accept(point.x());
+                ys.accept(point.y());
+            }
+        }
+        double anchorX = switch (data.horizontal()) {
+            case LEFT -> 0;
+            case CENTER -> (xs.getMin() + xs.getMax()) / 2;
+            case RIGHT -> xs.getMax();
+        };
+        double anchorY = switch (data.vertical()) {
+            case BASELINE -> 0;
+            case TOP -> ys.getMax();
+            case MIDDLE -> (ys.getMin() + ys.getMax()) / 2;
+            case BOTTOM -> ys.getMin();
+        };
+        var anchor = new Vec(anchorX, anchorY);
+        var origin = new Vec(text.value(0), text.value(1));
+        return result.stream()
+                .map(curve -> {
+                    var values = new ArrayList<Double>();
+                    for (int i = 0; i < curve.values().size(); i += 2) {
+                        var point = SketchCurves.rotate(
+                                        new Vec(curve.value(i), curve.value(i + 1)).minus(anchor), text.value(3))
+                                .plus(origin);
+                        values.add(point.x());
+                        values.add(point.y());
+                    }
+                    return curve.withValues(values);
+                })
+                .toList();
+    }
+
+    public static Vec anchor(SketchGeometry geometry, Entity text) {
+        if (text.text().pathId().isEmpty()) return new Vec(text.value(0), text.value(1));
+        var path = geometry.entity(text.text().pathId());
+        double t = parameterAtDistance(path, text.value(0));
+        return path.at(t).plus(path.derivative(t).unit().normal().times(text.value(1)));
     }
 
     private static double parameterAtDistance(Entity curve, double distance) {
