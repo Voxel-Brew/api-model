@@ -30,8 +30,8 @@ Tests use JUnit 5. Name test classes `*Test` and methods as behavior statements,
 
 ## Pre-commit SpotBugs
 
-For a standalone checkout, set `VOXELBREW_BOM_DIR` to a VoxelBrew BOM checkout that
-contains `spotbugs-conventions`. The composite workspace and CI supply it automatically.
+The build resolves VoxelBrew artifacts through Maven and fetches shared quality policy
+from the public BOM master branch.
 
 Before committing, run `./gradlew spotbugsMain` from this API repository or
 `./gradlew :model:spotbugsMain` from the composite workspace.
