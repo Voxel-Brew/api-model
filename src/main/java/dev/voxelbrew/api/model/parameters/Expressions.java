@@ -14,10 +14,28 @@ import lombok.NonNull;
 @lombok.experimental.UtilityClass
 public class Expressions {
 
-    private static final Set<String> FUNCTIONS =
-            Set.of("abs", "sqrt", "min", "max", "sin", "cos", "tan", "asin", "acos", "atan", "floor", "ceil", "round");
+    // True for names historically reserved by the parameter format. Other names also work as parameters.
+    private static final Map<String, Boolean> FUNCTIONS = Map.ofEntries(
+            Map.entry("abs", true),
+            Map.entry("sqrt", true),
+            Map.entry("min", true),
+            Map.entry("max", true),
+            Map.entry("sin", true),
+            Map.entry("cos", true),
+            Map.entry("tan", true),
+            Map.entry("asin", true),
+            Map.entry("acos", true),
+            Map.entry("atan", true),
+            Map.entry("floor", true),
+            Map.entry("ceil", true),
+            Map.entry("round", true),
+            Map.entry("ceiling", false),
+            Map.entry("clamp", false),
+            Map.entry("log", false),
+            Map.entry("ln", false),
+            Map.entry("convertUnit", false),
+            Map.entry("formatUnit", false));
     private static final double GOLDEN_RATIO = (1 + Math.sqrt(5)) / 2;
-    private static final Set<String> NEW_FUNCTIONS = Set.of("ceiling", "clamp", "log", "ln");
     private static final Pattern TOKEN =
             Pattern.compile("\"(?:[^\"]|\"\")*\"|(?<![A-Za-z_0-9.])[A-Za-z][A-Za-z_.]*(?:\\s*\\()?|[(),]");
 
@@ -203,6 +221,7 @@ public class Expressions {
             if (name.isEmpty()) throw error("Expected a number or parameter name");
             if (name.equals("NaN") || name.equals("Infinity")) throw error("Expression must be finite");
             if (take('(')) {
+                if (!FUNCTIONS.containsKey(name)) throw error("Unknown function '" + name + "'");
                 if (name.equals("convertUnit") || name.equals("formatUnit")) return convertUnit(name);
                 var arguments = new ArrayList<Quantity<?>>();
                 arguments.add(numeric(sum()));
@@ -247,9 +266,6 @@ public class Expressions {
         }
 
         Quantity<?> function(String name, List<Quantity<?>> args) {
-            if (!FUNCTIONS.contains(name) && !NEW_FUNCTIONS.contains(name)) {
-                throw error("Unknown function '" + name + "'");
-            }
             int count = switch (name) {
                 case "min", "max" -> 2;
                 case "clamp" -> 3;
@@ -392,7 +408,7 @@ public class Expressions {
     }
 
     public static boolean reserved(String name) {
-        return FUNCTIONS.contains(name)
+        return Boolean.TRUE.equals(FUNCTIONS.get(name))
                 || name.equals("pi")
                 || name.equals("e")
                 || name.equals("NaN")
