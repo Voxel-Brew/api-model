@@ -16,6 +16,8 @@ public class Expressions {
 
     private static final Set<String> FUNCTIONS =
             Set.of("abs", "sqrt", "min", "max", "sin", "cos", "tan", "asin", "acos", "atan", "floor", "ceil", "round");
+    private static final double GOLDEN_RATIO = (1 + Math.sqrt(5)) / 2;
+    private static final Set<String> NEW_FUNCTIONS = Set.of("ceiling", "clamp", "log", "ln");
     private static final Pattern TOKEN = Pattern.compile("\"(?:[^\"]|\"\")*\"|(?<![A-Za-z_0-9.])[A-Za-z][A-Za-z_.]*");
 
     private static final class Parser {
@@ -87,20 +89,24 @@ public class Expressions {
                 if (take('*')) q = times(numeric(q), numeric(unary()), false);
                 else if (take('/')) {
                     q = times(numeric(q), numeric(unary()), true);
+                } else if (take('%')) {
+                    var divisor = numeric(unary());
+                    while (nextIsUnit()) divisor = times(divisor, numeric(unary()), false);
+                    q = modulo(numeric(q), divisor);
+                } else if (nextIsUnit()) {
+                    q = times(numeric(q), numeric(unary()), false);
                 } else {
-                    skip();
-                    int begin = index;
-                    String word = word();
-                    var suffix = Arrays.stream(ParameterUnit.values())
-                            .filter(u -> u.toString().equals(word))
-                            .findFirst();
-                    index = begin;
-                    if (suffix.isPresent()) q = times(numeric(q), numeric(unary()), false);
-                    else {
-                        return q;
-                    }
+                    return q;
                 }
             }
+        }
+
+        boolean nextIsUnit() {
+            int begin = index;
+            String symbol = word();
+            index = begin;
+            return Arrays.stream(ParameterUnit.values())
+                    .anyMatch(u -> u.toString().equals(symbol));
         }
 
         Object unary() {
@@ -171,6 +177,9 @@ public class Expressions {
                 if (q == null) throw error("Unknown parameter '" + name + "'");
                 return q instanceof String ? q : normalized(numeric(q));
             }
+            if (take('π')) return quantity(Math.PI, ONE);
+            if (take('τ')) return quantity(Math.TAU, ONE);
+            if (take('φ')) return quantity(GOLDEN_RATIO, ONE);
             char first = input.charAt(index);
             if (Character.isDigit(first) || first == '.') {
                 int begin = index++;
@@ -193,6 +202,7 @@ public class Expressions {
             if (name.isEmpty()) throw error("Expected a number or parameter name");
             if (name.equals("NaN") || name.equals("Infinity")) throw error("Expression must be finite");
             if (take('(')) {
+                if (name.equals("convertUnit") || name.equals("formatUnit")) return convertUnit(name);
                 var arguments = new ArrayList<Quantity<?>>();
                 arguments.add(numeric(sum()));
                 while (take(',')) arguments.add(numeric(sum()));
@@ -207,17 +217,67 @@ public class Expressions {
                 }
             }
             var q = names.apply(name);
+            if (q == null && name.equals("tau")) return quantity(Math.TAU, ONE);
+            if (q == null && name.equals("phi")) return quantity(GOLDEN_RATIO, ONE);
             if (q == null) throw error("Unknown parameter '" + name + "'");
             return q instanceof String ? q : normalized(numeric(q));
         }
 
+        Object convertUnit(String name) {
+            var source = numeric(sum());
+            if (!take(',')) throw error(name + " requires a quantity and a target unit");
+            var target = ParameterUnit.parse(word());
+            if (target == ParameterUnit.NUMBER || !sameKind(source.getUnit(), target.unit())) {
+                throw error(name + " requires a compatible length or angle unit");
+            }
+            if (!take(')')) throw error("Expected closing parenthesis after target unit");
+            var result = quantity(value(source, target.unit()), ONE);
+            return name.equals("formatUnit") ? format(result) + " " + target : result;
+        }
+
+        Quantity<?> modulo(Quantity<?> a, Quantity<?> b) {
+            if (scalar(a) && !scalar(b)) a = implicit(a, b, unit);
+            if (scalar(b) && !scalar(a)) b = implicit(b, a, unit);
+            double divisor = value(b, a.getUnit());
+            if (divisor == 0) throw error("Modulo by zero");
+            double remainder = number(a) % divisor;
+            if (remainder != 0 && Math.signum(remainder) != Math.signum(divisor)) remainder += divisor;
+            return quantity(remainder, a.getUnit());
+        }
+
         Quantity<?> function(String name, List<Quantity<?>> args) {
-            if (!FUNCTIONS.contains(name)) throw error("Unknown function '" + name + "'");
-            if (args.size() != (name.equals("min") || name.equals("max") ? 2 : 1)) {
+            if (!FUNCTIONS.contains(name) && !NEW_FUNCTIONS.contains(name)) {
+                throw error("Unknown function '" + name + "'");
+            }
+            int count = switch (name) {
+                case "min", "max" -> 2;
+                case "clamp" -> 3;
+                default -> 1;
+            };
+            if (args.size() != count) {
                 throw error("Wrong argument count for " + name);
             }
             var q = args.getFirst();
             return switch (name) {
+                case "ln", "log" -> {
+                    if (!scalar(q) || number(q) <= 0) throw error(name + " requires a positive unitless input");
+                    yield quantity(name.equals("ln") ? Math.log(number(q)) : Math.log10(number(q)), ONE);
+                }
+                case "clamp" -> {
+                    var dimension = args.stream()
+                            .filter(arg -> !scalar(arg))
+                            .findFirst()
+                            .orElse(q);
+                    var numbers = args.stream()
+                            .mapToDouble(arg -> {
+                                var compatible =
+                                        scalar(arg) && !scalar(dimension) ? implicit(arg, dimension, unit) : arg;
+                                return value(compatible, dimension.getUnit());
+                            })
+                            .toArray();
+                    if (numbers[1] > numbers[2]) throw error("clamp minimum exceeds maximum");
+                    yield quantity(Math.clamp(numbers[0], numbers[1], numbers[2]), dimension.getUnit());
+                }
                 case "min", "max" -> {
                     var b = args.get(1);
                     if (scalar(q) && !scalar(b)) q = implicit(q, b, unit);
@@ -226,12 +286,12 @@ public class Expressions {
                     yield quantity(
                             name.equals("min") ? Math.min(number(q), other) : Math.max(number(q), other), q.getUnit());
                 }
-                case "abs", "floor", "ceil", "round" ->
+                case "abs", "floor", "ceil", "ceiling", "round" ->
                     quantity(
                             switch (name) {
                                 case "abs" -> Math.abs(number(q));
                                 case "floor" -> Math.floor(number(q));
-                                case "ceil" -> Math.ceil(number(q));
+                                case "ceil", "ceiling" -> Math.ceil(number(q));
                                 default -> Math.rint(number(q));
                             },
                             q.getUnit());
@@ -342,8 +402,14 @@ public class Expressions {
 
     public static String rename(String expression, String oldName, String newName) {
         return TOKEN.matcher(expression)
-                .replaceAll(
-                        m -> java.util.regex.Matcher.quoteReplacement(m.group().equals(oldName) ? newName : m.group()));
+                .replaceAll(m -> java.util.regex.Matcher.quoteReplacement(
+                        m.group().equals(oldName)
+                                        && !expression
+                                                .substring(m.end())
+                                                .stripLeading()
+                                                .startsWith("(")
+                                ? newName
+                                : m.group()));
     }
 
     public static Quantity<?> evaluate(String expression, ParameterUnit unit, Function<String, ?> names) {
