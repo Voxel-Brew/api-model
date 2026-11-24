@@ -6,6 +6,17 @@ import org.junit.jupiter.api.Test;
 
 class CadFormulaTest {
     @Test
+    void renamingPreservesUnitTargetsInNestedConversionCalls() {
+        var p = ParameterSet.empty()
+                .put("M", ParameterUnit.M, "2", "")
+                .put("result", ParameterUnit.NUMBER, "convertUnit(max(M, $M), M)", "");
+        var renamed = p.rename("M", "FT");
+        assertThat(renamed.value("$result", ParameterUnit.NUMBER)).isEqualTo(2);
+        assertThat(Expressions.rename("formatUnit((M + $M), M) + \"M\" + M", "M", "length"))
+                .isEqualTo("formatUnit((length + $length), M) + \"M\" + length");
+    }
+
+    @Test
     void geometryConstantsAndFunctionsWorkWithKeyboardSpellingsAndParameters() {
         var p = ParameterSet.empty().put("foo", ParameterUnit.NUMBER, "9", "");
         assertThat(p.value("sqrt($foo)", ParameterUnit.NUMBER)).isEqualTo(3);

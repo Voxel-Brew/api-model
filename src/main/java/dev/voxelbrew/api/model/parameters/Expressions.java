@@ -18,7 +18,8 @@ public class Expressions {
             Set.of("abs", "sqrt", "min", "max", "sin", "cos", "tan", "asin", "acos", "atan", "floor", "ceil", "round");
     private static final double GOLDEN_RATIO = (1 + Math.sqrt(5)) / 2;
     private static final Set<String> NEW_FUNCTIONS = Set.of("ceiling", "clamp", "log", "ln");
-    private static final Pattern TOKEN = Pattern.compile("\"(?:[^\"]|\"\")*\"|(?<![A-Za-z_0-9.])[A-Za-z][A-Za-z_.]*");
+    private static final Pattern TOKEN =
+            Pattern.compile("\"(?:[^\"]|\"\")*\"|(?<![A-Za-z_0-9.])[A-Za-z][A-Za-z_.]*(?:\\s*\\()?|[(),]");
 
     private static final class Parser {
         final String input;
@@ -401,15 +402,23 @@ public class Expressions {
     }
 
     public static String rename(String expression, String oldName, String newName) {
-        return TOKEN.matcher(expression)
-                .replaceAll(m -> java.util.regex.Matcher.quoteReplacement(
-                        m.group().equals(oldName)
-                                        && !expression
-                                                .substring(m.end())
-                                                .stripLeading()
-                                                .startsWith("(")
-                                ? newName
-                                : m.group()));
+        var matcher = TOKEN.matcher(expression);
+        var calls = new ArrayDeque<Boolean>();
+        boolean unitTarget = false;
+        var result = new StringBuilder();
+        while (matcher.find()) {
+            String token = matcher.group();
+            if (token.endsWith("(")) {
+                String function = token.substring(0, token.length() - 1).stripTrailing();
+                calls.push(function.equals("convertUnit") || function.equals("formatUnit"));
+            } else if (token.equals(")") && !calls.isEmpty()) {
+                calls.pop();
+            } else if (!unitTarget && token.equals(oldName)) {
+                matcher.appendReplacement(result, java.util.regex.Matcher.quoteReplacement(newName));
+            }
+            unitTarget = token.equals(",") && Boolean.TRUE.equals(calls.peek());
+        }
+        return matcher.appendTail(result).toString();
     }
 
     public static Quantity<?> evaluate(String expression, ParameterUnit unit, Function<String, ?> names) {
