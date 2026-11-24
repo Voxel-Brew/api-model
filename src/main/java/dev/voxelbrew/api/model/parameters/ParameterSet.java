@@ -377,7 +377,7 @@ public record ParameterSet(
                 }
                 if (resolved.containsKey(name)) return resolved.get(name);
                 var p = byName.get(name);
-                if (p == null) throw new IllegalArgumentException("Unknown parameter: " + name);
+                if (p == null) return null;
                 if (!visiting.add(name)) {
                     throw new IllegalArgumentException(
                             "Cyclic parameter dependency: " + String.join(" → ", visiting) + " → " + name);
@@ -416,6 +416,8 @@ public record ParameterSet(
             @Override
             public Object apply(String name) {
                 if (name.startsWith("vb.")) return builtins.value(name);
+                if ((name.equals("tau") || name.equals("phi"))
+                        && parameters.stream().noneMatch(p -> p.name().equals(name))) return null;
                 if (resolved == null) resolved = values();
                 return resolved.get(name);
             }
