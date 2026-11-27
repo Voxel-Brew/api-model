@@ -48,6 +48,9 @@ The **Create a merge commit** option is blocked.
 
 History favors short, imperative subjects (`Use BOM versions...`) and occasionally scoped Conventional Commit prefixes (`build:`, `ci:`, `docs:`, `feat(printing):`). Keep each commit focused. PRs should explain the API impact, identify BOM or version changes, link relevant issues, and report `./gradlew check` results. Avoid unrelated generated files, credentials, or build output. Treat published coordinates and versions as immutable.
 
+When a commit addresses a known GitHub issue, include the issue number in the
+commit subject as the scope, for example `feat(#1337): foo boo bar baz`.
+
 When a pull request resolves a known GitHub issue, add `Closes #123` to the PR description,
 using the actual issue number. For an issue in another repository, use
 `Closes owner/repository#123`. Add the closing reference to the PR targeting
